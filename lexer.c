@@ -473,7 +473,7 @@ void run_lexer_machine(const _ar sources_list)
 			lexeme_buffer = realloc(lexeme_buffer, lexeme_buffer_size);
 		}
 
-		if(buffer[i] == '~')
+		if (buffer[i] == '~')
 			buffer_mod = PASS;
 
 		if (buffer_mod == PASS && buffer[i] != '\n')
