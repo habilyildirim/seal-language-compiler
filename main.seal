@@ -1,0 +1,13 @@
+INCLUDE STD
+
+ff integer32 test ()
+{
+
+}
+
+unsigned int y = 5;
+
+jump(y == a) x
+
+x->
+	return 0;
