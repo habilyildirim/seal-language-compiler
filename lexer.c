@@ -28,8 +28,7 @@ const _symbol symbol_table[] =
 {
 	{';',  SYMBOL_SEMICOLON},
 	{',',  SYMBOL_COMMA},
-	{'.',  SYMBOL_DOT},
-
+	
 	{'(',  SYMBOL_LPAREN},
 	{')',  SYMBOL_RPAREN},
 	{'{',  SYMBOL_LBRACE},
@@ -38,7 +37,8 @@ const _symbol symbol_table[] =
 	{']',  SYMBOL_RBRACKET},
 	{'\'', SYMBOL_SINGLE_QUOTE},
 	{'"',  SYMBOL_DOUBLE_QUOTE},
-
+	{'#',  KEYWORD_FUNCTION},
+	
 	{'+',  SYMBOL_PLUS},
 	{'-',  SYMBOL_MINUS},
 	{'*',  SYMBOL_MULTIPLY},
@@ -47,10 +47,11 @@ const _symbol symbol_table[] =
 	{'=',  SYMBOL_ASSIGN},
 
 	{'\\', SYMBOL_BACKSLASH},
-	{'#',  SYMBOL_HASH}
+	{':',  KEYWORD_LABEL},
+	{'$',  SYMBOL_DOLAR},
 };
-
-#define SYMBOL_TABLE_LENGTH 19
+	
+#define SYMBOL_TABLE_LENGTH 20
 
 const _loperator logical_operator_table[] =
 {
@@ -92,13 +93,12 @@ const _keyword keyword_table[] =
 {
 	{"INCLUDE",  KEYWORD_INCLUDE},
 	{"DEFINE",   KEYWORD_MACRO},
-	{"ff",       KEYWORD_FUNCTION},
 	{"return",   KEYWORD_RETURN},
 	{"jump",     KEYWORD_JUMPER},
 	{"unsigned", KEYWORD_UNSIGNED},
 };
 
-#define KEYWORD_TABLE_LENGTH 6
+#define KEYWORD_TABLE_LENGTH 5
 
 /* ======================================== TOOLS ======================================== */
 
@@ -113,42 +113,43 @@ _token_type query_symbol(const char lexeme)
 	return SYMBOL_INVALID;
 }
 
-_token_type query_loperator_token(const char *lexeme, unsigned int *loop_i)
+_token_type query_loperator_token(const char *lexeme, unsigned int *i)
 {
+	// For != and ! not to overlap
 	if (strcmp(lexeme, "!=") == 0)
 		return NON;
 
 	char single_operant[2] = {(char)lexeme[0], '\0'};
 
-	for (unsigned int i = 0; i < LOGICAL_OPERATOR_TABLE_LENGTH; i++)
+	for (unsigned int c = 0; c < LOGICAL_OPERATOR_TABLE_LENGTH; c++)
 	{
-		if (strcmp(lexeme, logical_operator_table[i].lexeme) == 0)
+		if (strcmp(lexeme, logical_operator_table[c].lexeme) == 0)
 		{
-			(*loop_i)++;
-			return logical_operator_table[i].token_type;
+			(*i)++;
+			return logical_operator_table[c].token_type;
 		}
 
-		if (strcmp(single_operant, logical_operator_table[i].lexeme) == 0)
-			return logical_operator_table[i].token_type;
+		if (strcmp(single_operant, logical_operator_table[c].lexeme) == 0)
+			return logical_operator_table[c].token_type;
 	}
 
 	return NON;
 }
 
-_token_type query_roperator_token(const char *lexeme, unsigned int *loop_i)
+_token_type query_roperator_token(const char *lexeme, unsigned int *i)
 {
 	char single_operant[2] = {(char)lexeme[0], '\0'};
 
-	for (unsigned int i = 0; i < RELATIONAL_OPERATOR_TABLE_LENGTH; i++)
+	for (unsigned int c = 0; c < RELATIONAL_OPERATOR_TABLE_LENGTH; c++)
 	{
-		if (strcmp(lexeme, relational_operator_table[i].lexeme) == 0)
+		if (strcmp(lexeme, relational_operator_table[c].lexeme) == 0)
 		{
-			(*loop_i)++;
-			return relational_operator_table[i].token_type;
+			(*i)++;
+			return relational_operator_table[c].token_type;
 		}
 
-		if (strcmp(single_operant, relational_operator_table[i].lexeme) == 0)
-			return relational_operator_table[i].token_type;
+		if (strcmp(single_operant, relational_operator_table[c].lexeme) == 0)
+			return relational_operator_table[c].token_type;
 	}
 
 	return NON;
@@ -156,10 +157,10 @@ _token_type query_roperator_token(const char *lexeme, unsigned int *loop_i)
 
 _token_type query_data_type(const char *lexeme)
 {
-	for (unsigned int i = 0; i < DATA_TYPE_TABLE_LENGTH; i++)
+	for (unsigned int c = 0; c < DATA_TYPE_TABLE_LENGTH; c++)
 	{
-		if (strcmp(lexeme, data_type_table[i].lexeme) == 0)
-			return data_type_table[i].token_type;
+		if (strcmp(lexeme, data_type_table[c].lexeme) == 0)
+			return data_type_table[c].token_type;
 	}
 
 	return NON;
@@ -167,23 +168,29 @@ _token_type query_data_type(const char *lexeme)
 
 _token_type query_keyword(const char *lexeme)
 {
-	for (unsigned int i = 0; i < KEYWORD_TABLE_LENGTH; i++)
+	for (unsigned int c = 0; c < KEYWORD_TABLE_LENGTH; c++)
 	{
-		if (strcmp(lexeme, keyword_table[i].lexeme) == 0)
-			return keyword_table[i].token_type;
+		if (strcmp(lexeme, keyword_table[c].lexeme) == 0)
+			return keyword_table[c].token_type;
 	}
+
+	if(is_integer(lexeme))
+		return INTEGER_LITERAL;
 
 	return IDENTIFIER;
 }
 
 void emit_token(const _token_type tt, _token_group tg, const char* value, const unsigned int tokens_counter, const unsigned int line_counter, unsigned int column_counter)
 {
+	if (strlen(value) > 255)
+		lexer_error(sources_files[0], line_counter, column_counter, IDENTIFIER_OVERFLOW);
+
 	void *tmp_tokensr = realloc(tokens, sizeof(_token) * (tokens_counter + 1));
 
 	if (tmp_tokensr == NULL)
 	{
-		fprintf(stderr, "REALLOC IS NULL");
-		exit(0);
+		fprintf(stderr, "Lexer realloc error");
+		exit(1);
 	}
 
 	tokens = tmp_tokensr;
@@ -197,12 +204,27 @@ void emit_token(const _token_type tt, _token_group tg, const char* value, const 
 	if (tt == IDENTIFIER)
 		tg = _IDENTIFIER;
 
+	if (isbinop(value))
+		tg = BINARY_OP;
+	
 	tokens[tokens_counter].token_type = tt;
 	tokens[tokens_counter].token_group = tg;
 	strcpy(tokens[tokens_counter].value, value);
 	tokens[tokens_counter].line = line_counter;
 	tokens[tokens_counter].column = column_counter;
 }
+
+typedef enum
+{
+	PASS,
+	BLOCK_PASS,
+	READ,
+	READ_STRING_LITERAL,
+	READ_ESCAPE,
+	READ_CHAR_LITERAL,
+	READ_INTEGER_LITERAL,
+}
+_buffer_mod;
 
 /* ======================================== LEXER MACHINE ======================================== */
 
@@ -223,8 +245,13 @@ unsigned int column_counter = 1;
 
 _buffer_mod buffer_mod = READ;
 
-void lexer_scan_word(_token_type *dt, const unsigned int i)
+void scan_word(_token_type *dt, const unsigned int i)
 {
+	/*
+		_isalnum -> If parameter equal '_' then return true 
+		or if alnum(chr) is true then return true a
+	*/
+
 	if (!_isalnum(buffer[i]) && (*dt = query_data_type(lexeme_buffer)) != NON)
 	{
 		emit_token(*dt, DTYPE, lexeme_buffer, tokens_counter, line_counter, column_counter);
@@ -242,7 +269,7 @@ void lexer_scan_word(_token_type *dt, const unsigned int i)
 	}
 }
 
-void lexer_scan_operator(_token_type *lo, _token_type *ro, unsigned int *i)
+void scan_operator(_token_type *lo, _token_type *ro, unsigned int *i)
 {
 	char operator_tmp[3] = {buffer[*i], buffer[*i + 1], '\0'};
 
@@ -256,6 +283,11 @@ void lexer_scan_operator(_token_type *lo, _token_type *ro, unsigned int *i)
 			operator_tmp[1] = '\0';
 
 		emit_token(*lo, LOPERATOR, operator_tmp, tokens_counter, line_counter, column_counter);
+
+		/*
+			If lo is single char then increase
+			column position for diagnostic
+		*/
 
 		if (*lo != ROPERATOR_LESS && *lo != ROPERATOR_GREATER)
 			column_counter++;
@@ -278,7 +310,7 @@ void lexer_scan_operator(_token_type *lo, _token_type *ro, unsigned int *i)
 	}
 }
 
-void lexer_scan_symbol(_token_type *ro, _token_type *lo, const unsigned int i)
+void scan_symbol(_token_type *ro, _token_type *lo, const unsigned int i)
 {
 	if ((!_isalnum(buffer[i]) && !isspace(buffer[i])) && (*ro == NON && *lo == NON))
 	{
@@ -292,11 +324,15 @@ void lexer_scan_symbol(_token_type *ro, _token_type *lo, const unsigned int i)
 	}
 }
 
-void try_read_buffer(const char *buffer, const unsigned int i, _buffer_mod BUFFER_MOD)
+void read_buffer(const char* buffer, const unsigned int i, _buffer_mod BUFFER_MOD)
 {
-	if (BUFFER_MOD == READ_STRING_LITERAL)
+	if (BUFFER_MOD == READ_STRING_LITERAL || BUFFER_MOD == READ_ESCAPE)
 	{
-		lexeme_buffer[lexeme_buffer_counter] = *buffer;
+		if (BUFFER_MOD == READ_ESCAPE)
+			lexeme_buffer[lexeme_buffer_counter] = *buffer;
+		else
+			lexeme_buffer[lexeme_buffer_counter] = buffer[i];
+			
 		lexeme_buffer[lexeme_buffer_counter + 1] = '\0';
 		lexeme_buffer_counter++;
 
@@ -315,6 +351,8 @@ void try_read_buffer(const char *buffer, const unsigned int i, _buffer_mod BUFFE
 
 void update_position(const unsigned int i)
 {
+	// Position for diagnostic
+
 	column_counter++;
 
 	if (buffer[i] == '\n')
@@ -324,35 +362,40 @@ void update_position(const unsigned int i)
 	}
 }
 
-void try_read_string_literal(unsigned int *loop_i)
+void read_string_literal(unsigned int *i, const unsigned int is_charliteral)
 {
+	if (buffer_mod != READ_STRING_LITERAL)
+		return;
+
 	char delimiter = '\"';
-	_token_type emit_type = STRING_LITERAL;
 
-	if (buffer_mod == READ_CHAR_LITERAL)
-	{
+	if (is_charliteral)
 		delimiter = '\'';
-		emit_type = CHAR_LITERAL;
-	}
 
-	for (;buffer_mod == READ_STRING_LITERAL || buffer_mod == READ_CHAR_LITERAL; (*loop_i)++)
+	while (buffer_mod == READ_STRING_LITERAL)
 	{
-		update_position(*loop_i);
+		update_position(*i);
 
-		if (buffer[*loop_i] == delimiter)
+		if(buffer[*i] == delimiter)
 		{
-			emit_token(emit_type, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
+			_token_type ltmp_tt = STRING_LITERAL;
+
+			if (is_charliteral)
+				ltmp_tt = CHAR_LITERAL;
+
+
+			emit_token(ltmp_tt, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
 			clear_buffer(lexeme_buffer, &lexeme_buffer_counter);
 
 			tokens_counter++;
 			buffer_mod = READ;
 		}
 
-		if (buffer[*loop_i] == '\\')
+		if(buffer[*i] == '\\')
 		{
 			char escape_tmp[2];
 
-			switch (buffer[*loop_i + 1])
+			switch(buffer[*i + 1])
 			{
 				case '\\':
 					escape_tmp[0] = '\\';
@@ -390,34 +433,55 @@ void try_read_string_literal(unsigned int *loop_i)
 			}
 
 			escape_tmp[1] = '\0';
-			try_read_buffer(escape_tmp, *loop_i, buffer_mod);
+			read_buffer(escape_tmp, *i, READ_ESCAPE);
 
-			(*loop_i) += 2;
+			/*
+				Skip 2 char for simple 
+				(max char 2) espace seq
+
+				\\ \' \" \n \r \t \v \b \f \a
+			*/
+
+			(*i) += 2;
 			continue;
 		}
 
-		try_read_buffer(buffer, *loop_i, READ);
+		read_buffer(buffer, *i, buffer_mod);
+		(*i)++;
 	}
 }
 
-void try_read_integer_literal(unsigned int *loop_i)
+void read_char_literal(unsigned int *i)
+{
+	read_string_literal(&(*i), 1);
+}
+
+void read_integer_literal(unsigned int *i)
 {
 	if (buffer_mod != READ_INTEGER_LITERAL)
 		return;
 
-	char prefix[3] = {buffer[*loop_i], buffer[*loop_i + 1], '\0'};
+	char prefix[3] = {buffer[*i], buffer[*i + 1], '\0'};
 
 	/* ==== HEXADECIMAL ==== */
 
 	if (strcmp(prefix, "0x") == 0)
 	{
-		for (;isxdigit(buffer[*loop_i]) || (buffer[*loop_i] == 'x' && lexeme_buffer[1] == '\0'); (*loop_i)++)
+		/*
+			(buffer[*i] == 'x' && lexeme_buffer[1] == '\0')
+			(buffer[*i] == 'b' && lexeme_buffer[1] == '\0')
+
+			Check buffer for prevent literal prefixes 
+			from being entered integer literal.
+		*/
+
+		for (;isxdigit(buffer[*i]) || (buffer[*i] == 'x' && lexeme_buffer[1] == '\0'); (*i)++)
 		{
-			update_position(*loop_i);
-			try_read_buffer(buffer, *loop_i, READ_INTEGER_LITERAL);
+			update_position(*i);
+			read_buffer(buffer, *i, READ_INTEGER_LITERAL);
 		}
 
-		if (isalpha(buffer[*loop_i]) && !isxdigit(buffer[*loop_i]))
+		if (isalpha(buffer[*i]) && !isxdigit(buffer[*i]))
 			lexer_error(sources_files[0], line_counter, column_counter, IS_NOT_HEX);
 
 		emit_token(INTEGER_LITERAL, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
@@ -428,13 +492,13 @@ void try_read_integer_literal(unsigned int *loop_i)
 
 	if (strcmp(prefix, "0b") == 0)
 	{
-		for (;_isbinary(buffer[*loop_i]) || (buffer[*loop_i] == 'b' && lexeme_buffer[1] == '\0'); (*loop_i)++)
+		for (;_isbinary(buffer[*i]) || (buffer[*i] == 'b' && lexeme_buffer[1] == '\0'); (*i)++)
 		{
-			update_position(*loop_i);
-			try_read_buffer(buffer, *loop_i, READ_INTEGER_LITERAL);
+			update_position(*i);
+			read_buffer(buffer, *i, READ_INTEGER_LITERAL);
 		}
 
-		if (isalpha(buffer[*loop_i]) || (!_isbinary(buffer[*loop_i]) && isdigit(buffer[*loop_i])))
+		if (isalpha(buffer[*i]) || (!_isbinary(buffer[*i]) && isdigit(buffer[*i])))
 			lexer_error(sources_files[0], line_counter, column_counter, IS_NOT_BIN);
 
 		emit_token(INTEGER_LITERAL, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
@@ -443,13 +507,13 @@ void try_read_integer_literal(unsigned int *loop_i)
 
 	/* ==== DECIMAL ==== */
 
-	for (;isdigit(buffer[*loop_i]); (*loop_i)++)
+	for (;isdigit(buffer[*i]); (*i)++)
 	{
-		update_position(*loop_i);
-		try_read_buffer(buffer, *loop_i, READ_INTEGER_LITERAL);
+		update_position(*i);
+		read_buffer(buffer, *i, READ_INTEGER_LITERAL);
 	}
 
-	if (isalpha(buffer[*loop_i]))
+	if (isalpha(buffer[*i]))
 		lexer_error(sources_files[0], line_counter, column_counter, IS_NOT_DECIMAL);
 
 	emit_token(INTEGER_LITERAL, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
@@ -464,14 +528,33 @@ void run_lexer_machine(const _ar sources_list)
 	lexeme_buffer[0] = '\0';
 
 	sources_files = sources_list;
-
+	
 	for (unsigned int i = 0; i < buffersize; i++)
-	{
+	{		
 		if (lexeme_buffer_counter + 1 >= lexeme_buffer_size)
 		{
 			lexeme_buffer_size *= 2;
 			lexeme_buffer = realloc(lexeme_buffer, lexeme_buffer_size);
 		}
+
+		/*
+			/~
+				Block comment
+			~/
+		*/
+		
+		if (buffer[i] == '/' && buffer[i + 1] == '~')
+			buffer_mod = BLOCK_PASS;
+		if (buffer[i] == '~' && buffer[i + 1] == '/')
+			buffer_mod = READ;
+
+		if (buffer_mod == BLOCK_PASS)
+		{
+			update_position(i);
+			continue;
+		}
+
+		// ~ <- Comment line
 
 		if (buffer[i] == '~')
 			buffer_mod = PASS;
@@ -481,6 +564,9 @@ void run_lexer_machine(const _ar sources_list)
 			update_position(i);
 			continue;
 		}
+
+		if (buffer_mod == READ && (lexeme_buffer[0] == '\0' && isdigit(buffer[i])))
+			buffer_mod = READ_INTEGER_LITERAL;
 
 		if (buffer_mod == READ && buffer[i] == '\"')
 		{
@@ -494,23 +580,36 @@ void run_lexer_machine(const _ar sources_list)
 			continue;
 		}
 
-		if (buffer_mod == READ && (lexeme_buffer[0] == '\0' && isdigit(buffer[i])))
-			buffer_mod = READ_INTEGER_LITERAL;
+		/*
+			read_literal functions if read 
+			buffer match then start literal
 
-		try_read_string_literal(&i);
-		try_read_integer_literal(&i);
+			string_literal: If buffermod not equal 
+							string_literal then exit function
+
+			... et al
+		*/
+		
+		read_string_literal(&i, 0);
+		read_integer_literal(&i);
+		read_char_literal(&i);
 
 		buffer_mod = READ;
 
-		try_read_buffer(buffer, i, buffer_mod);
+		read_buffer(buffer, i, buffer_mod);
 
 		_token_type dt = NON;
 		_token_type lo = NON;
 		_token_type ro = NON;
 
-		lexer_scan_word(&dt, i);
-		lexer_scan_operator(&lo, &ro, &i);
-		lexer_scan_symbol(&lo, &ro, i);
+		/*
+			Scan word for detection 
+			identifier and keyword.
+		*/
+
+		scan_word(&dt, i);
+		scan_operator(&lo, &ro, &i);
+		scan_symbol(&lo, &ro, i);
 
 		update_position(i);
 	}

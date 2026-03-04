@@ -1,13 +1,19 @@
-INCLUDE STD
+INCLUDE "test"
 
-ff integer32 test ()
+integer32 asd = 0;
+
+jump (a) 
+	test;
+
+integer32 astt = 1;
+
+asd = 123;
+
+test(1 + 1, 6 + 1);
+return 1 + -5 + foo(1 + 1, 5 + 5);
+
+#
+integer8 main (integer8 a)
 {
-
+	test(1 + lls, test);
 }
-
-unsigned int y = 5;
-
-jump(y == a) x
-
-x->
-	return 0;

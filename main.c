@@ -19,10 +19,13 @@
 
 */
 
-/* main.c Was written for testing purposes. Will be replaced later. */
+/* main.c Was written for testing purposes. Will be replaced later!! */
 
 #include "common.h"
 #include "lexer.h"
+#include "parser.h"
+#include "semantic.h"
+#include "ir.h"
 #include "test.c"
 
 #define VERSION "Seal Version - Under"
@@ -56,6 +59,7 @@ int main(int argc, char *argv[])
 	_arsize sources_list_size = 0;
 
 	/* control the extensions */
+	
 	int sources_i_counter = 0;
 
 	for (unsigned int i = 1; i < (unsigned int)argc; i++)
@@ -80,7 +84,10 @@ int main(int argc, char *argv[])
 	}
 
 	run_lexer_machine(sources_list);
-	print_tokens(1);
+	//print_tokens(1);
+
+	run_parser();
+	print_ast(1);
 
 	return 0;
 }

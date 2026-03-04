@@ -15,5 +15,7 @@ int _isalnum(const char c);
 void clear_buffer(char *buffer, unsigned int *buffer_counter);
 char* open_buffer(const char* source, unsigned int *buffersize);
 int _isbinary(char value);
+int isbinop (const char* value);
+int is_integer(const char* c);
 
 #endif

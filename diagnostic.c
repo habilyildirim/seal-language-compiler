@@ -88,7 +88,10 @@ void lexer_error(const char* source_file, const unsigned int line, const unsigne
 			printf("| This char is not binary\n");
 			exit(1);
 		case IS_NOT_DECIMAL:
-			printf("| This chat is not decimal(number)\n");
+			printf("| This char is not decimal(number)\n");
+			exit(1);
+		case IDENTIFIER_OVERFLOW:
+			printf("| Identifier name overflow. Identifier name must be 256(max) char\n");
 			exit(1);
 		default:
 			printf("| Unexpected error\n");
@@ -96,13 +99,60 @@ void lexer_error(const char* source_file, const unsigned int line, const unsigne
 	}
 }
 
-void parser_error(const char* source_file, const unsigned int line, const unsigned int column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE)
+void parser_error(const char* source_file, const unsigned int line, const unsigned int column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE, const char* err_arg)
 {
 	printf("parser-err~~> %s:%d:%d\n", source_file, line, column);
 	print_lines(source_file, line);
 	print_caret(column);
 
-	// ...
+	switch (ERROR_TYPE)
+	{
+		case MISSING_ARG:
+			printf("| Missing argument\n");
+			exit (1);
+		case UNEXPECTED_INCLUDE:
+			printf("| Syntax error; INCLUDE Useage ~> INCLUDE <STRING_LITERAL>\n");
+			exit (1);
+		case UNEXPECTED_MACRO:
+			printf("| Syntax error; MACRO Useage ~> MACRO <IDENTIFIER> <*>\n");
+			exit(1);
+		case UNEXPECTED_FUNCTION:
+			printf("| Syntax error; FUNCTION Useage ~>\nff <DATA_TYPE> <FUNCTION_NAME>(<VAR_DEFINATION>, ...)\n{\n	...\n}\n\n");
+			exit(1);
+		case NESTED_FUNCTIONS:
+			printf("| Nested error; Functions shoulden not be use nested");
+			exit(1);
+		case UNEXPECTED_CALL:
+			printf("| Syntax error; CALL Useage ~> <FUNCTION_NAME>(<PARAMETER>, PARAMETER>....)");
+			exit(1);
+		case UNEXPECTED_UVAR:
+			printf("| Syntax error; UNSIGNED VARIABLE Useage ~> unsigned <DATA_TYPE> <VAR_NAME> ....\n");
+			exit(1);
+		case UNEXPECTED_VAR:
+			printf("| Syntax error; VARIABLE Useage ~> <DATA_TYPE> <VAR_NAME> ....\n");
+			exit(1);
+		case UNEXPECTED_JUMPER:
+			printf("| Syntax error; JUMPER Useage ~> jump (<CONDITION>) <IDENTIFIER>\n");
+			exit(1);
+		case UNEXPECTED_LABEL:
+			printf("| Syntax error; LABEL Useage ~> #<IDENTIFIER>\n");
+			exit(1);
+		case MISSING_SEMICOLON:
+			printf("| Syntax error; missing semicolon (;)\n");
+			exit(1);
+		case MISSING_DOLLAR:
+			printf("| Syntax error; missing dollar ($)\n");
+			exit(1);
+		case WRONG_EXPRESSION:
+			printf("| Incorrect expression.\n");
+			exit(1);
+		case UNEXPECTED:
+			printf("| Unexpected keyword\n");
+			exit(1);
+		default:
+			printf("| Unexpected error\n");
+			exit(1);
+	}
 }
 
 void semantic_error(const char* source_file, const unsigned int line, const unsigned int column, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)

@@ -29,6 +29,7 @@ typedef enum
 
 	SYMBOL_BACKSLASH,    /* \ */
 	SYMBOL_HASH,         // #
+	SYMBOL_DOLAR,		 // $
 
 	SYMBOL_INVALID,
 
@@ -36,7 +37,7 @@ typedef enum
 
 	LOPERATOR_AND, // &&
 	LOPERATOR_OR,  // ||
-	LOPERATOR_NOT,     // !
+	LOPERATOR_NOT, // !
 
 	/* RELATIONAL OPERATOR */
 
@@ -63,10 +64,11 @@ typedef enum
 
 	KEYWORD_INCLUDE,  // INCLUDE
 	KEYWORD_MACRO,    // DEF
-	KEYWORD_FUNCTION, // ff
+	KEYWORD_FUNCTION, // METHOD
 	KEYWORD_RETURN,   // return
 	KEYWORD_JUMPER,   // jump
 	KEYWORD_UNSIGNED, // unsigned
+	KEYWORD_LABEL,    // :
 
 	INTEGER_LITERAL,
 	STRING_LITERAL,
@@ -79,6 +81,7 @@ _token_type;
 
 typedef enum
 {
+	BINARY_OP,
 	SYMBOL,
 	LOPERATOR, // LOGICAL OPERATOR
 	ROPERATOR, // RELATIONAL OPERATOR
@@ -88,16 +91,6 @@ typedef enum
 	_IDENTIFIER,
 }
 _token_group;
-
-typedef enum
-{
-	PASS,
-	READ,
-	READ_STRING_LITERAL,
-	READ_CHAR_LITERAL,
-	READ_INTEGER_LITERAL,
-}
-_buffer_mod;
 
 /* LEXEME TYPE */
 
@@ -151,13 +144,12 @@ typedef struct
 }
 _token;
 
-void print_tokens();
-
 extern _token* tokens;
 extern unsigned int tokens_counter;
+
+extern _ar sources_files;
 
 void run_lexer_machine(const _ar sources_list);
 void print_tokens(unsigned int ex);
 
 #endif
-

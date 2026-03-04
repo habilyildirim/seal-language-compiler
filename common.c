@@ -26,7 +26,7 @@ int _isalnum(const char c)
 		[a-zA-Z0-9], _
 	*/
 
-	if(isalnum((char)c) || c == '_')
+	if(isalnum(c) || c == '_')
 		return 1;
 
 	return 0;
@@ -76,4 +76,53 @@ int _isbinary(char value)
 		return 1;
 
 	return 0;
+}
+
+int isbinop (const char* value)
+{
+	if (strcmp(value, "+") == 0)
+		return 1;
+
+	if (strcmp(value, "-") == 0)
+		return 1;
+
+	if (strcmp(value, "*") == 0)
+		return 1;
+
+	if (strcmp(value, "/") == 0)
+		return 1;
+
+	if (strcmp(value, "%") == 0)
+		return 1;
+
+	if (strcmp(value, "&&") == 0)
+		return 1;
+
+	if (strcmp(value, "||") == 0)
+		return 1;
+
+	if (strcmp(value, "==") == 0)
+		return 1;
+
+	if (strcmp(value, "!=") == 0)
+		return 1;
+
+	if (strcmp(value, "<") == 0)
+		return 1;
+
+	if (strcmp(value, ">") == 0)
+		return 1;
+
+	return 0;
+}
+
+int is_integer(const char* c)
+{
+    if (c == NULL || *c == '\0')
+        return 0;
+
+    char* end;
+    strtol(c, &end, 10);
+
+    return *end == '\0';
 }
