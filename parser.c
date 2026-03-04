@@ -558,7 +558,7 @@ void run_parser()
 
 	for (unsigned int i = 0; i < tokens_counter; i++)
 	{
-		// If close brace then clean scope
+		// If brace is closed then clean the scope.
 		if (strcmp(scope, "global") != 0 && tokens[i].token_type == SYMBOL_RBRACE)
 		{
 			strcpy(scope, "global");
