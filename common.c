@@ -80,37 +80,17 @@ int _isbinary(char value)
 
 int isbinop (const char* value)
 {
-	if (strcmp(value, "+") == 0)
-		return 1;
-
-	if (strcmp(value, "-") == 0)
-		return 1;
-
-	if (strcmp(value, "*") == 0)
-		return 1;
-
-	if (strcmp(value, "/") == 0)
-		return 1;
-
-	if (strcmp(value, "%") == 0)
-		return 1;
-
-	if (strcmp(value, "&&") == 0)
-		return 1;
-
-	if (strcmp(value, "||") == 0)
-		return 1;
-
-	if (strcmp(value, "==") == 0)
-		return 1;
-
-	if (strcmp(value, "!=") == 0)
-		return 1;
-
-	if (strcmp(value, "<") == 0)
-		return 1;
-
-	if (strcmp(value, ">") == 0)
+	if (strcmp(value, "+") == 0 || 
+		strcmp(value, "-") == 0 || 
+		strcmp(value, "*") == 0 || 
+		strcmp(value, "/") == 0 || 
+		strcmp(value, "%") == 0 || 
+		strcmp(value, "&&") == 0 || 
+		strcmp(value, "||") == 0 ||
+		strcmp(value, "==") == 0 ||
+		strcmp(value, "!=") == 0 ||
+		strcmp(value, "<") == 0 ||
+		strcmp(value, ">") == 0)
 		return 1;
 
 	return 0;
