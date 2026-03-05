@@ -115,7 +115,7 @@ _token_type query_symbol(const char lexeme)
 
 _token_type query_loperator_token(const char *lexeme, unsigned int *i)
 {
-	// For != and ! not to overlap
+	// This control is for the != and ! not to overlap
 	if (strcmp(lexeme, "!=") == 0)
 		return NON;
 
@@ -248,8 +248,8 @@ _buffer_mod buffer_mod = READ;
 void scan_word(_token_type *dt, const unsigned int i)
 {
 	/*
-		_isalnum -> If parameter equal '_' then return true 
-		or if alnum(chr) is true then return true a
+		_isalnum -> If parameter is equal to '_'
+		or alnum(chr) is true then return true
 	*/
 
 	if (!_isalnum(buffer[i]) && (*dt = query_data_type(lexeme_buffer)) != NON)
@@ -542,7 +542,7 @@ void lexer_main(const _ar sources_list)
 				Block comment
 			~/
 		*/
-		
+
 		if (buffer[i] == '/' && buffer[i + 1] == '~')
 			buffer_mod = BLOCK_PASS;
 		if (buffer[i] == '~' && buffer[i + 1] == '/')
@@ -581,15 +581,18 @@ void lexer_main(const _ar sources_list)
 		}
 
 		/*
-			read_literal functions if read 
-			buffer match then start literal
+			If buffer_mod is match then start
+			literal by read_literal functions
 
-			string_literal: If buffermod not equal 
-							string_literal then exit function
+			string_literal: If buffermod is not equal to
+							string_literal then exit the function.
 
-			... et al
+							buffermod is equal to string_literal then 
+							start generate literal.
+	
+			... and others
 		*/
-		
+
 		read_string_literal(&i, 0);
 		read_integer_literal(&i);
 		read_char_literal(&i);
@@ -603,8 +606,8 @@ void lexer_main(const _ar sources_list)
 		_token_type ro = NON;
 
 		/*
-			Scan word for detection 
-			identifier and keyword.
+			Scan the word for detection 
+			identifier and the keyword.
 		*/
 
 		scan_word(&dt, i);
