@@ -149,7 +149,7 @@ extern unsigned int tokens_counter;
 
 extern _ar sources_files;
 
-void run_lexer_machine(const _ar sources_list);
+void lexer_main(const _ar sources_list);
 void print_tokens(unsigned int ex);
 
 #endif

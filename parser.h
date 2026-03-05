@@ -142,6 +142,6 @@ AST;
 extern AST* ast;
 extern unsigned int ast_counter;
 
-void run_parser();
+void parser_main();
 
 #endif

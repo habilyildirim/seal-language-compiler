@@ -313,7 +313,8 @@ AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
 			
 			return result;
 		}
-	
+
+		result.var.value = NULL;
 		if (tokens[*i].token_type != SYMBOL_SEMICOLON)
 			parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
 	
@@ -344,6 +345,7 @@ AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
 
 	overflow_control(*i, MISSING_SEMICOLON);
 
+	result.var.value = NULL;
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
 		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
 
@@ -549,7 +551,7 @@ AST parse_function(unsigned int *i, unsigned int c)
 	return result;
 }
 
-void run_parser()
+void parser_main()
 {
 	ast = malloc(sizeof(AST) * 2);
 

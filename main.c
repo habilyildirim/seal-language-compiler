@@ -83,10 +83,10 @@ int main(int argc, char *argv[])
 		sources_i_counter++;
 	}
 
-	run_lexer_machine(sources_list);
+	lexer_main(sources_list);
 	//print_tokens(1);
 
-	run_parser();
+	parser_main();
 	print_ast(1);
 
 	return 0;

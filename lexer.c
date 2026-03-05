@@ -520,7 +520,7 @@ void read_integer_literal(unsigned int *i)
 	return;
 }
 
-void run_lexer_machine(const _ar sources_list)
+void lexer_main(const _ar sources_list)
 {
 	buffer = open_buffer(sources_list[0], &buffersize);
 

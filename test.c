@@ -100,15 +100,21 @@ void print_ast(unsigned int ex)
 				printf("	->VAR TYPE; %s\n", ast[i].var.type);
 				printf("	->VAR NAME; %s\n", ast[i].var.name);
 				printf("	->VAR VALUE; "); 
-				print_expr(ast[i].var.value);
+
+				if(ast[i].var.value != NULL)
+					print_expr(ast[i].var.value);
+
 				printf("\n");
 				break;
 			case UVAR:
 				printf("AST %d - UNSIGNED VARIABLE \n", i);
 				printf("	->VAR TYPE; %s\n", ast[i].var.type);
 				printf("	->VAR NAME; %s\n", ast[i].var.name);
-				printf("	->VAR VALUE; "); 
-				print_expr(ast[i].var.value);
+				printf("	->VAR VALUE; ");
+
+				if(ast[i].var.value != NULL)
+					print_expr(ast[i].var.value);
+
 				printf("\n");
 				break;
 			case PARSE_ASSIGNMENT:
