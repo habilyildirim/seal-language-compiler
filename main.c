@@ -87,7 +87,9 @@ int main(int argc, char *argv[])
 	//print_tokens(1);
 
 	parser_main();
-	print_ast(1);
+	//print_ast(0);
+
+	semantic_main();
 
 	return 0;
 }

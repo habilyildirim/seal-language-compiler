@@ -1,6 +1,6 @@
 /*
 
-	Seal Compiler - IR Layer
+	Seal Compiler - Code Generator
 
 	Copyright (C) 2026 Habil Yıldırım
 
@@ -19,10 +19,10 @@
 
 */
 
-#include "parser.h"
+#include "ir.h"
 #include "common.h"
 
-void ir_main()
+void codegen_main()
 {
 	
 }

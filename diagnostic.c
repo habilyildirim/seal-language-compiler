@@ -22,6 +22,8 @@
 #include "common.h"
 #include "diagnostic.h"
 
+unsigned int tab_counter = 0;
+
 void print_lines(const char* source_file, const unsigned int line)
 {
 	char* file = NULL;
@@ -33,9 +35,15 @@ void print_lines(const char* source_file, const unsigned int line)
 
 	for (unsigned int i = 0; i != filesize; i++)
 	{
+		if (c == line)
+		{
+			for (unsigned int t = i; file[t] == '\t'; t++)
+				tab_counter++;
+		}
+
 		if (c == line - 1 || c == line)
 		{
-			printf("	");
+			printf("\t");
 
 			for (;file[i] != '\n'; i++)
 				printf("%c", file[i]);
@@ -55,8 +63,12 @@ void print_lines(const char* source_file, const unsigned int line)
 
 void print_caret(unsigned int column)
 {
-	if	(column == 1)
+	for (unsigned int i = 0; i < tab_counter; i++)
+		printf("~~~~~~~");
+
+	if (column == 1)
 	{
+		printf("~~~~~~~~");
 		printf("^\n");
 		return;
 	}
@@ -69,7 +81,7 @@ void print_caret(unsigned int column)
 
 void lexer_error(const char* source_file, const unsigned int line, const unsigned int column, const LEXER_LAYER_ERROR_TYPE ERROR_TYPE)
 {
-	printf("lexer-err~~> %s:%d:%d\n", source_file, line, column);
+	printf("lexer-err~~> %s:%d:%d\n\n", source_file, line, column);
 	print_lines(source_file, line);
 	print_caret(column);
 
@@ -99,9 +111,9 @@ void lexer_error(const char* source_file, const unsigned int line, const unsigne
 	}
 }
 
-void parser_error(const char* source_file, const unsigned int line, const unsigned int column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE, const char* err_arg)
+void parser_error(const char* source_file, const unsigned int line, const unsigned int column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE)
 {
-	printf("parser-err~~> %s:%d:%d\n", source_file, line, column);
+	printf("parser-err~~> %s:%d:%d\n\n", source_file, line, column);
 	print_lines(source_file, line);
 	print_caret(column);
 
@@ -138,10 +150,10 @@ void parser_error(const char* source_file, const unsigned int line, const unsign
 			printf("| Syntax error; LABEL Useage ~> #<IDENTIFIER>\n");
 			exit(1);
 		case MISSING_SEMICOLON:
-			printf("| Syntax error; missing semicolon (;)\n");
+			printf("| Syntax error; Missing semicolon (;)\n");
 			exit(1);
 		case MISSING_DOLLAR:
-			printf("| Syntax error; missing dollar ($)\n");
+			printf("| Syntax error; Missing dollar ($)\n");
 			exit(1);
 		case WRONG_EXPRESSION:
 			printf("| Incorrect expression.\n");
@@ -155,13 +167,32 @@ void parser_error(const char* source_file, const unsigned int line, const unsign
 	}
 }
 
-void semantic_error(const char* source_file, const unsigned int line, const unsigned int column, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
+void semantic_error(const char* source_file, const unsigned int line, const unsigned int column, const char* scope, const unsigned int scpline,
+												const unsigned int scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("semantic-err~~> %s:%d:%d\n", source_file, line, column);
+	printf("       ^~in~~~> %s:%d:%d\n", scope, scpline, scpcolumn);
+
+	if (argument != NULL)
+		printf("       ^~this~> %s\n\n", argument);
+	else
+		printf("\n");	
+
 	print_lines(source_file, line);
 	print_caret(column);
 
-	// ...
+	switch (ERROR_TYPE)
+	{
+		case REDEFINITION:
+			printf("| Of Redefinition\n");
+			exit(1);
+		case UNDEFINED:
+			printf("| Of undefined\n");
+			exit(1);
+		default:
+			printf("| Unexpected error\n");
+			exit(1);
+	}
 }
 
 void ir_error(const char* source_file, const unsigned int line, const unsigned int column, const IR_LAYER_ERROR_TYPE ERROR_TYPE)

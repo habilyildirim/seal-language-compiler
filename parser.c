@@ -30,10 +30,7 @@
 void overflow_control(const unsigned int c, PARSER_LAYER_ERROR_TYPE err)
 {
 	if (c >= tokens_counter)
-	{
-		parser_error(sources_files[0], tokens[c - 1].line, 
-						tokens[c - 1].column, err, NULL);	
-	}
+		parser_error(source_files[0], tokens[c - 1].line, tokens[c - 1].column, err);
 }
 
 int get_precedence(_token t)
@@ -67,7 +64,7 @@ EXPR* parse_expression
 EXPR* parse_primary(unsigned int *i)
 {
 	overflow_control(*i, WRONG_EXPRESSION);
-	
+
     _token tok = tokens[*i];
 
     EXPR* node = malloc(sizeof(EXPR));
@@ -115,7 +112,7 @@ EXPR* parse_primary(unsigned int *i)
         	}
 
         	if (tokens[*i].token_type != SYMBOL_RPAREN)
-        		parser_error(sources_files[0], tokens[*i - 1].line, tokens[*i - 1].column, WRONG_EXPRESSION, NULL);
+        		parser_error(source_files[0], tokens[*i - 1].line, tokens[*i - 1].column, WRONG_EXPRESSION);
 
         	(*i)++;
 
@@ -129,7 +126,7 @@ EXPR* parse_primary(unsigned int *i)
 
         	return node;
     	}
-        
+
         return node;
     }
 
@@ -153,7 +150,7 @@ EXPR* parse_primary(unsigned int *i)
         return inner;
     }
 
-    parser_error(sources_files[0], tok.line, tok.column, WRONG_EXPRESSION, NULL);
+	parser_error(source_files[0], tok.line, tok.column, WRONG_EXPRESSION);
 }
 
 EXPR* parse_expression(unsigned int *i, int precedence)
@@ -220,10 +217,7 @@ AST parse_include(unsigned int *i, unsigned int c)
 	result.type = INCLUDE;
 
 	if (tokens[*i + 1].token_type != STRING_LITERAL)
-	{
-		printf(tokens[*i + 1].value);
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_INCLUDE, NULL);
-	}
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_INCLUDE);
 
 	result.include.lib = tokens[*i + 1].value;
 	(*i)++;
@@ -241,7 +235,7 @@ AST parse_macro(unsigned int *i, unsigned int c)
 	(*i)++;
 
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_MACRO, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_MACRO);
 
 	result.macro.macro_name = tokens[*i].value;
 
@@ -285,7 +279,7 @@ AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
 		(*i)++;
 
 		if (tokens[*i].token_group != DTYPE)
-			parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR, NULL);
+			parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR);
 
 		overflow_control(*i, MISSING_ARG);
 		char* us_type = malloc(strlen("unsigned ") + strlen(tokens[*i + 2].value) + 1);
@@ -296,7 +290,7 @@ AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
 		(*i)++;
 
 		if (tokens[*i].token_group != _IDENTIFIER)
-			parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR, NULL);
+			parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR);
 	
 		result.var.name = tokens[*i].value;
 		(*i)++;
@@ -309,14 +303,14 @@ AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
 			overflow_control(*i, MISSING_SEMICOLON);
 
 			if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-				parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
+				parser_error(source_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 			
 			return result;
 		}
 
 		result.var.value = NULL;
 		if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-			parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
+			parser_error(source_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 	
 		return result;
 	}
@@ -325,8 +319,8 @@ AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
 	(*i)++;
 	
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_VAR, NULL);
-		
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_VAR);
+
 	result.var.name = tokens[*i].value;
 	(*i)++;
 	
@@ -338,7 +332,7 @@ AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
 		overflow_control(*i, MISSING_SEMICOLON);
 
 		if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-			parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
+			parser_error(source_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 		return result;
 	}
@@ -347,7 +341,7 @@ AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
 
 	result.var.value = NULL;
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -375,7 +369,7 @@ AST parse_assignment(unsigned int *i, unsigned int c)
 	overflow_control(*i, MISSING_SEMICOLON);
 	
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -401,7 +395,7 @@ AST parse_call(unsigned int *i, unsigned int c)
 	}
 
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -419,7 +413,7 @@ AST parse_return(unsigned int *i, unsigned int c)
 	overflow_control(*i, MISSING_SEMICOLON);
 
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -434,18 +428,19 @@ AST parse_jumper(unsigned int *i, unsigned int c)
 	(*i)++;
 	
 	if (tokens[*i].token_type != SYMBOL_LPAREN)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
 
 	(*i)++;
 
 	result.jumper.condition = parse_expression(&(*i), 0);
 
 	if (tokens[*i].token_type != SYMBOL_RPAREN)
-			parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
+
 	(*i)++;
 	
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
 
 	result.jumper.label = tokens[*i].value;
 
@@ -454,7 +449,7 @@ AST parse_jumper(unsigned int *i, unsigned int c)
 	overflow_control(*i, MISSING_SEMICOLON);
 
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -469,7 +464,7 @@ AST parse_label(unsigned int *i, unsigned int c)
 	(*i)++;
 	
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_LABEL, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_LABEL);
 	
 	result.label.name = tokens[*i].value;
 	
@@ -479,6 +474,8 @@ AST parse_label(unsigned int *i, unsigned int c)
 AST* ast;
 unsigned int ast_counter = 0;
 char* scope;
+unsigned int scope_line = 0;
+unsigned int scope_column = 0;
 
 AST parse_function(unsigned int *i, unsigned int c)
 {
@@ -490,14 +487,14 @@ AST parse_function(unsigned int *i, unsigned int c)
 	(*i)++;
 
 	if (tokens[*i].token_group != DTYPE)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
 	result.function.function_type = tokens[*i].value;
 
 	(*i)++;
 
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
 	result.function.function_name = tokens[*i].value;
 	scope = strdup(tokens[*i].value);
@@ -505,7 +502,7 @@ AST parse_function(unsigned int *i, unsigned int c)
 	(*i)++;
 
 	if (tokens[*i].token_type != SYMBOL_LPAREN)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
 	(*i)++;
 
@@ -521,7 +518,8 @@ AST parse_function(unsigned int *i, unsigned int c)
 
 		if (tokens[*i].token_group == DTYPE)
 		{	
-			result.function.args = realloc(result.function.args, sizeof(*result.function.args) * (argc + 1));
+			result.function.args = realloc(result.function.args, 
+			        		sizeof(*result.function.args) * (argc + 1));
 			result.function.args[argc].type = tokens[*i].value;
 
 			(*i)++;
@@ -535,10 +533,10 @@ AST parse_function(unsigned int *i, unsigned int c)
 				continue;
 			}
 
-			parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION, NULL);
+			parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 		}
 
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 	}
 
 	result.function.argc = argc;
@@ -546,7 +544,7 @@ AST parse_function(unsigned int *i, unsigned int c)
 	(*i)++;
 
 	if (tokens[*i].token_type != SYMBOL_LBRACE)
-		parser_error(sources_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION, NULL);
+		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
 	return result;
 }
@@ -569,13 +567,20 @@ void parser_main()
 
 		/* PARSE DATA TYPE */
 
+		const unsigned int tmp_line = tokens[i].line;
+		const unsigned int tmp_column = tokens[i].column;
+
 		if (tokens[i].token_group == DTYPE)
 		{
 			ast[ast_counter] = parse_var(&i, 0, ast_counter);
 			ast[ast_counter].scope = strdup(scope);
+			ast[ast_counter].line = tmp_line;
+			ast[ast_counter].column = tmp_column;
+			ast[ast_counter].scpline = scope_line;
+			ast[ast_counter].scpcolumn = scope_column;
+
 			ast_counter++;
 			ast = realloc(ast, sizeof(AST) * ast_counter * 2);
-
 			continue;
 		}
 
@@ -586,9 +591,13 @@ void parser_main()
 		{
 			ast[ast_counter] = parse_assignment(&i, ast_counter);
 			ast[ast_counter].scope = strdup(scope);
+			ast[ast_counter].line = tokens[i].line;
+			ast[ast_counter].column = tokens[i].column;
+			ast[ast_counter].scpline = scope_line;
+			ast[ast_counter].scpcolumn = scope_column;
+
 			ast_counter++;
 			ast = realloc(ast, sizeof(AST) * ast_counter * 2);
-
 			continue;
 		}
 
@@ -596,12 +605,16 @@ void parser_main()
 
 		overflow_control(i, MISSING_ARG);
 		if (tokens[i].token_type == IDENTIFIER && tokens[i + 1].token_type == SYMBOL_LPAREN)
-		{	
+		{
 			ast[ast_counter] = parse_call(&i, ast_counter);
 			ast[ast_counter].scope = strdup(scope);
+			ast[ast_counter].line = tokens[i].line;
+			ast[ast_counter].column = tokens[i].column;
+			ast[ast_counter].scpline = scope_line;
+			ast[ast_counter].scpcolumn = scope_column;
+
 			ast_counter++;
 			ast = realloc(ast, sizeof(AST) * ast_counter * 2);
-
 			continue;
 		}
 
@@ -612,43 +625,75 @@ void parser_main()
 			case KEYWORD_INCLUDE:
 				ast[ast_counter] = parse_include(&i, ast_counter);
 				ast[ast_counter].scope = strdup(scope);
+				ast[ast_counter].line = tokens[i].line;
+				ast[ast_counter].column = tokens[i].column;
+				ast[ast_counter].scpline = scope_line;
+				ast[ast_counter].scpcolumn = scope_column;
 				ast_counter++;
 				break;
 			case KEYWORD_MACRO:
 				ast[ast_counter] = parse_macro(&i, ast_counter);
 				ast[ast_counter].scope = strdup(scope);
+				ast[ast_counter].line = tokens[i].line;
+				ast[ast_counter].column = tokens[i].column;
+				ast[ast_counter].scpline = scope_line;
+				ast[ast_counter].scpcolumn = scope_column;
 				ast_counter++;
 				break;
 			case KEYWORD_UNSIGNED:
 				ast[ast_counter] = parse_var(&i, 1, ast_counter);
 				ast[ast_counter].scope = strdup(scope);
+				ast[ast_counter].line = tokens[i].line;
+				ast[ast_counter].column = tokens[i].column;
+				ast[ast_counter].scpline = scope_line;
+				ast[ast_counter].scpcolumn = scope_column;
 				ast_counter++;
 				break;
 			case KEYWORD_FUNCTION:
 				if (strcmp(scope, "global") != 0)
-					parser_error(sources_files[0], tokens[i].line, tokens[i].column, UNEXPECTED_FUNCTION, NULL);
+					parser_error(source_files[0], tokens[i].line, tokens[i].column, UNEXPECTED_FUNCTION);
 
 				ast[ast_counter] = parse_function(&i, ast_counter);
 				ast[ast_counter].scope = strdup(scope);
+				ast[ast_counter].line = tokens[i].line;
+				ast[ast_counter].column = tokens[i].column;
+				ast[ast_counter].scpline = scope_line;
+				ast[ast_counter].scpcolumn = scope_column;
+
+				scope_line = tokens[i].line;
+				scope_column = tokens[i].column;
+
 				ast_counter++;
 				break;
 			case KEYWORD_RETURN:
 				ast[ast_counter] = parse_return(&i, ast_counter);
 				ast[ast_counter].scope = strdup(scope);
+				ast[ast_counter].line = tokens[i].line;
+				ast[ast_counter].column = tokens[i].column;
+				ast[ast_counter].scpline = scope_line;
+				ast[ast_counter].scpcolumn = scope_column;
 				ast_counter++;
 				break;
 			case KEYWORD_JUMPER:
 				ast[ast_counter] = parse_jumper(&i, ast_counter);
 				ast[ast_counter].scope = strdup(scope);
+				ast[ast_counter].line = tokens[i].line;
+				ast[ast_counter].column = tokens[i].column;
+				ast[ast_counter].scpline = scope_line;
+				ast[ast_counter].scpcolumn = scope_column;
 				ast_counter++;
 				break;
 			case KEYWORD_LABEL:
 				ast[ast_counter] = parse_label(&i, ast_counter);
 				ast[ast_counter].scope = strdup(scope);
+				ast[ast_counter].line = tokens[i].line;
+				ast[ast_counter].column = tokens[i].column;
+				ast[ast_counter].scpline = scope_line;
+				ast[ast_counter].scpcolumn = scope_column;
 				ast_counter++;
 				break;
 			default:
-				parser_error(sources_files[0], tokens[i].line, tokens[i].column, UNEXPECTED, NULL);
+				parser_error(source_files[0], tokens[i].line, tokens[i].column, UNEXPECTED);
 		}
 
 		ast = realloc(ast, sizeof(AST) * ast_counter * 2);

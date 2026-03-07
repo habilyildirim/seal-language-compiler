@@ -5,13 +5,31 @@ DEFINE TEST_VAL 11 $
 
 integer x;
 
+integer32 a = 15;
+a = 12;
+
+#integer8 test1(integer c)
+{
+	integer asd;
+}
+
+integer asd;
+
 #integer32 test(integer8 i)
 {
-	i = i - 1;
-	return i + 5;
+	asd = 11;
 }
+
+~c = 12;
 
 #integer8 all()
 {
-	i = y;
+
+}
+
+test(ssall());
+
+#integer8 al()
+{
+
 }

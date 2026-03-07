@@ -147,7 +147,7 @@ _token;
 extern _token* tokens;
 extern unsigned int tokens_counter;
 
-extern _ar sources_files;
+extern _ar source_files;
 
 void lexer_main(const _ar sources_list);
 void print_tokens(unsigned int ex);

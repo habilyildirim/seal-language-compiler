@@ -4,13 +4,10 @@
 typedef enum 
 {
 	NODE_INT_LITERAL,
-	NODE_FUNCTION_CALL,
-	NODE_MACRO,
 	NODE_BINARY,
 	NODE_IDENTIFIER,
 	NODE_UNARY,
 	NODE_CALL,
-	NULL_NT,
 }
 _node_type;
 
@@ -32,18 +29,18 @@ _AST_TYPE;
 typedef struct EXPR
 {
     _node_type type;
-    
-    union 
+
+    union
     {
         char* literal;
         char* identifier;
-        
-        struct 
+
+        struct
         {
             struct EXPR* left;
             struct EXPR* right;
             char* op;
-        } 
+        }
         binary;
 
         struct
@@ -53,25 +50,36 @@ typedef struct EXPR
         }
         unary;
 
-        struct 
+        struct
         {
             char* callee;
             struct EXPR** args;
             unsigned int argc;
-        } 
+        }
         call;
     };
-} 
+}
 EXPR;
 
 typedef struct
 {
 	_AST_TYPE type;
 	unsigned int seq;
+
+	unsigned int line;
+	unsigned int column;
+
+	unsigned int scpline;
+	unsigned int scpcolumn;
 	char* scope;
 
 	union
 	{
+		/*
+			scope_ref vars written for already
+			exists control from semantic
+		*/
+
 		struct
 		{
 			char* lib;
@@ -112,6 +120,7 @@ typedef struct
 		{
 			char* label;
 			struct EXPR* condition;
+			
 		}
 		jumper;
 

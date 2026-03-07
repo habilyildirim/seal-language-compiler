@@ -147,7 +147,7 @@ void print_ast(unsigned int ex)
 		printf("	->SCOPE; %s \n", ast[i].scope);
 	}
 
-	printf("AST COUNTER; %d\n", ast_counter);
+	printf("AST COUNTER; %d\n\n", ast_counter);
 
 	if (ex)
 		exit(0);
