@@ -1,2 +1,2 @@
 # seal-language-compiler
-Seal language compiler
+Official Seal language compiler repository
