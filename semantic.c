@@ -160,7 +160,6 @@ void semantic_main()
 					semantic_error(source_files[0], ast[i].line, ast[i].column, ast[i].scope, ast[i].scpline, 
 					                                         ast[i].scpcolumn, ast[i].call.callee, UNDEFINED);
 				}
-
 			default:
 		}
 	}
