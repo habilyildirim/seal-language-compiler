@@ -129,7 +129,7 @@ void parser_error(const char* source_file, const unsigned int line, const unsign
 			printf("| Syntax error; MACRO Useage ~> MACRO <IDENTIFIER> <*>\n");
 			exit(1);
 		case UNEXPECTED_FUNCTION:
-			printf("| Syntax error; FUNCTION Useage ~>\nff <DATA_TYPE> <FUNCTION_NAME>(<VAR_DEFINATION>, ...)\n{\n	...\n}\n\n");
+			printf("| Syntax error; FUNCTION Useage ~>\nff <DATA_TYPE> <FUNCTION_NAME>(<VAR_DEFINATION>, ...)\n{\n	...\n}\n");
 			exit(1);
 		case NESTED_FUNCTIONS:
 			printf("| Nested error; Functions shoulden not be use nested");
