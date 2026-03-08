@@ -698,4 +698,7 @@ void parser_main()
 
 		ast = realloc(ast, sizeof(AST) * ast_counter * 2);
 	}
+
+	if (strcmp(scope, "global") != 0)
+		parser_error(source_files[0], scope_line, scope_column, UNEXPECTED_FUNCTION);
 }
