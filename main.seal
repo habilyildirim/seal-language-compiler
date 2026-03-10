@@ -3,33 +3,14 @@ INCLUDE "testio.lbnz"
 
 DEFINE TEST_VAL 11 $
 
-integer x;
-
-integer32 a = 15;
-a = 12;
-
-#integer8 test1(integer c)
+#integer32 foo()
 {
-	integer asd;
+	integer foo;
 }
 
-integer asd;
+integer test;
 
-#integer32 test(integer8 i)
+#integer32 main()
 {
-	asd = 11;
-}
-
-~c = 12;
-
-#integer8 all()
-{
-
-}
-
-test(ssall());
-
-#integer8 al()
-{
-
+	foo();
 }

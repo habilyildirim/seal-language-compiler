@@ -62,7 +62,7 @@ sub change_test
 
 sub print_out
 {
-	print "\nMAKESCRIPT: OUT -> ";
+	print "MAKESCRIPT: OUT -> ";
 	system("echo $?");
 }
 
@@ -71,7 +71,7 @@ if (scalar @ARGV < 1)
 	my $command = "$CC $FLAGS $SOURCES -o $TARGET";
 
 	system($command) == 0 or die "\nbuild error";
-	print "\n\nMAKESCRIPT: $command";
+	print "MAKESCRIPT: $command\n";
 	print_out();
 	exit 0;
 }
@@ -81,7 +81,7 @@ if ($ARGV[0] eq "clear")
 	my $command = "rm $TARGET";
 	
 	system($command) == 0 or die "\n$TARGET not exists";
-	print "\n\nMAKESCRIPT: $command";
+	print "MAKESCRIPT: $command\n";
 	print_out();
 	exit 0;
 }
@@ -96,7 +96,7 @@ if ($ARGV[0] eq "run" || $ARGV[0] eq "mrun")
 	}
 	
 	system($command) == 0 or die "\n$TARGET not exists";
-	print "\n\nMAKESCRIPT: $command";
+	print "MAKESCRIPT: $command\n";
 	print_out();
 	exit 0;
 }

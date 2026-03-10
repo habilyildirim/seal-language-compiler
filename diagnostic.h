@@ -37,6 +37,8 @@ typedef enum
 {
 	REDEFINITION,
 	UNDEFINED,
+	GLOBAL_CANNOTRET,
+	CANNOT_RETNULLVAL,
 	NON_SEMANTIC,
 }
 SEMANTIC_LAYER_ERROR_TYPE;
@@ -49,16 +51,16 @@ typedef enum
 IR_LAYER_ERROR_TYPE;
 
 void lexer_error(const char* source_file, const unsigned int line, const unsigned int column, 
-                                                    const LEXER_LAYER_ERROR_TYPE ERROR_TYPE);
+					const LEXER_LAYER_ERROR_TYPE ERROR_TYPE);
 
 void parser_error(const char* source_file, const unsigned int line, const unsigned int column, 
-                                                    const PARSER_LAYER_ERROR_TYPE ERROR_TYPE);
+					const PARSER_LAYER_ERROR_TYPE ERROR_TYPE);
 
 void semantic_error(const char* source_file, const unsigned int line, const unsigned int column, const char* scope, 
-                                                          const unsigned int scpline, const unsigned int scpcolumn, 
-                                                 const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE);
+						const unsigned int scpline, const unsigned int scpcolumn, 
+						const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE);
 
 void ir_error(const char* source_file, const unsigned int line, const unsigned int column, 
-                                                    const IR_LAYER_ERROR_TYPE ERROR_TYPE);
+				const IR_LAYER_ERROR_TYPE ERROR_TYPE);
 
 #endif

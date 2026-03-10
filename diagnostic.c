@@ -184,10 +184,16 @@ void semantic_error(const char* source_file, const unsigned int line, const unsi
 	switch (ERROR_TYPE)
 	{
 		case REDEFINITION:
-			printf("| Of Redefinition\n");
+			printf("| of redefinition\n");
 			exit(1);
 		case UNDEFINED:
-			printf("| Of undefined\n");
+			printf("| of undefined\n");
+			exit(1);
+		case GLOBAL_CANNOTRET:
+			printf("| Global cannot be return \n");
+			exit(1);
+		case CANNOT_RETNULLVAL:
+			printf("| Cannot be return to null value \n");
 			exit(1);
 		default:
 			printf("| Unexpected error\n");
