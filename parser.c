@@ -237,14 +237,14 @@ AST parse_macro(unsigned int *i, unsigned int c)
 	if (tokens[*i].token_type != IDENTIFIER)
 		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_MACRO);
 
-	result.macro.macro_name = tokens[*i].value;
+	result.macro.name = tokens[*i].value;
 
 	(*i)++;
 	char* temp = malloc(strlen(tokens[*i].value) + 1);
 
 	if (tokens[*i].token_type == SYMBOL_DOLAR)
 	{
-		result.macro.macro_value = NULL;
+		result.macro.value = NULL;
 		return result;
 	}
 			
@@ -260,7 +260,7 @@ AST parse_macro(unsigned int *i, unsigned int c)
 
 	temp[strlen(temp)] = '\0';
 
-	result.macro.macro_value = temp;
+	result.macro.value = temp;
 
 	
 	return result;
@@ -489,14 +489,14 @@ AST parse_function(unsigned int *i, unsigned int c)
 	if (tokens[*i].token_group != DTYPE)
 		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
-	result.function.function_type = tokens[*i].value;
+	result.function.type = tokens[*i].value;
 
 	(*i)++;
 
 	if (tokens[*i].token_type != IDENTIFIER)
 		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
-	result.function.function_name = tokens[*i].value;
+	result.function.name = tokens[*i].value;
 	scope = strdup(tokens[*i].value);
 
 	(*i)++;

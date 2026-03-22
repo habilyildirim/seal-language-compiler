@@ -68,8 +68,8 @@ void print_ast(unsigned int ex)
 		{
 			case MACRO:
 				printf("AST %d - MACRO \n", i);
-				printf("	->MACRO NAME; %s\n", ast[i].macro.macro_name);
-				printf("	->MACRO VALUE; %s\n", ast[i].macro.macro_value);
+				printf("	->MACRO NAME; %s\n", ast[i].macro.name);
+				printf("	->MACRO VALUE; %s\n", ast[i].macro.value);
 				break;
 	  		case INCLUDE:
 				printf("AST %d - INCLUDE \n", i);
@@ -77,8 +77,8 @@ void print_ast(unsigned int ex)
 				break;
 			case FUNCTION:
 				printf("AST %d - FUNCTION \n", i);
-				printf("	->FUNCTION TYPE; %s\n", ast[i].function.function_type);
-				printf("	->FUNCTION NAME; %s\n", ast[i].function.function_name);
+				printf("	->FUNCTION TYPE; %s\n", ast[i].function.type);
+				printf("	->FUNCTION NAME; %s\n", ast[i].function.name);
 				printf("	->ARGC; %d\n", ast[i].function.argc);
 				break;
 			case CALL:

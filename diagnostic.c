@@ -171,10 +171,10 @@ void semantic_error(const char* source_file, const unsigned int line, const unsi
 												const unsigned int scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("semantic-err~~> %s:%d:%d\n", source_file, line, column);
-	printf("       ^~in~~~> %s:%d:%d\n", scope, scpline, scpcolumn);
+	printf("         ^~in~~> %s:%d:%d\n", scope, scpline, scpcolumn);
 
 	if (argument != NULL)
-		printf("       ^~this~> %s\n\n", argument);
+		printf("         ^~~~~~> %s\n\n", argument);
 	else
 		printf("\n");	
 
@@ -195,12 +195,22 @@ void semantic_error(const char* source_file, const unsigned int line, const unsi
 		case CANNOT_RETNULLVAL:
 			printf("| Cannot be return to null value \n");
 			exit(1);
+		case TYPE_ERROR:
+			printf("| Invalid expression type \n");
+			exit(1);
+		case ARGC_MISSMATCH:
+			printf("| Argument counter miss match to function defination. \n");
+			exit(1);
+		case WITHOUT_FUNCTION:
+			printf("| State without function");
+			exit(1);
 		default:
 			printf("| Unexpected error\n");
 			exit(1);
 	}
 }
 
+/*
 void ir_error(const char* source_file, const unsigned int line, const unsigned int column, const IR_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("ir-err~~> %s:%d:%d\n", source_file, line, column);
@@ -209,3 +219,4 @@ void ir_error(const char* source_file, const unsigned int line, const unsigned i
 
 	// ...
 }
+*/

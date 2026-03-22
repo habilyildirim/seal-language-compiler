@@ -30,6 +30,9 @@ unsigned int var_counter = 0;
 AST* function_buffer;
 unsigned int function_counter = 0;
 
+AST* label_buffer;
+unsigned int label_counter = 0;
+
 int definiton_control(const char* type, const AST current)
 {
 	if (strcmp(type, "var") == 0)
@@ -44,7 +47,7 @@ int definiton_control(const char* type, const AST current)
 
 		for (unsigned int i = 0; i < function_counter; i++)
 		{
-			if (strcmp(current.var.name, function_buffer[i].function.function_name) == 0 &&
+			if (strcmp(current.var.name, function_buffer[i].function.name) == 0 &&
 				strcmp(current.scope, "global") == 0)
 				return i;
 		}
@@ -54,15 +57,25 @@ int definiton_control(const char* type, const AST current)
 	{
 		for (unsigned int i = 0; i < function_counter; i++)
 		{
-			if (strcmp(current.function.function_name, 
-				function_buffer[i].function.function_name) == 0)
+			if (strcmp(current.function.name, 
+				function_buffer[i].function.name) == 0)
 				return i;
 		}
 
 		for (unsigned int i = 0; i < var_counter; i++)
 		{
-			if (strcmp(current.function.function_name, var_buffer[i].var.name) == 0 &&
+			if (strcmp(current.function.name, var_buffer[i].var.name) == 0 &&
 				strcmp(var_buffer[i].scope, "global") == 0)
+				return i;
+		}
+	}
+
+	if (strcmp(type, "label") == 0)
+	{
+		for (unsigned int i = 0; i < label_counter; i++)
+		{
+			if (strcmp(current.label.name, label_buffer[i].label.name) == 0 && 
+				strcmp(current.scope, label_buffer[i].scope) == 0)
 				return i;
 		}
 	}
@@ -70,104 +83,203 @@ int definiton_control(const char* type, const AST current)
 	return -1;
 }
 
-/*
-unsigned int expr_control(AST current, EXPR* e)
+int is_int(const char* dt)
 {
-	EXPR* expr_fbitc;
+	if (strcmp(dt, "binary") == 0 ||
+		strcmp(dt, "integer") == 0 ||
+		strcmp(dt, "integer8") == 0 ||
+		strcmp(dt, "integer16") == 0 ||
+		strcmp(dt, "integer32") == 0 ||
+		strcmp(dt, "integer64") == 0 ||
+		strcmp(dt, "double") == 0 ||
+		strcmp(dt, "float") == 0)
+		return 1;
 
-	char* type;
-	char* name;
+	return 0;
+}
+
+void expr_control(AST ast_root, const char* data_type, EXPR* e)
+{
+	AST ref;
+	int index;
 	
-	switch (current.type)
-	{
-		case UVAR:
-		case VAR:
-			type = strdup(current.var.type);
-			name = strdup(current.var.name);
-			break;
-		case FUNCTION:
-			type = strdup(current.function.function_type);
-			name = strdup(current.function.function_name);
-			break;
-		case RETURN:
-			if (strcmp(current.scope, "global") == 0)
+    switch (e->type)
+    {
+        case NODE_INT_LITERAL:
+            if (is_int(data_type) < 1)
+            {
+           		semantic_error(source_files[0], ast_root.line,  ast_root.column, 
+           						ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
+           						NULL, TYPE_ERROR);	
+            }
+
+            break;
+        case NODE_IDENTIFIER:
+        	ref.scope = ast_root.scope;
+        	ref.var.name = e->identifier;
+
+			index = definiton_control("var", ref);
+
+			if (index > -1)
 			{
-				semantic_error(source_files[0], current.line, current.column, 
-								current.scope, current.scpline, current.scpcolumn, 
-								NULL, GLOBAL_CANNOTRET);	
+				// Int escape
+				if (is_int(var_buffer[index].var.type) && is_int(data_type))
+					break;
+
+				// Identifier type controls
+				if (strcmp(var_buffer[index].var.type, data_type) != 0)
+				{
+					semantic_error(source_files[0], ast_root.line,  ast_root.column, 
+									ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
+									e->identifier, TYPE_ERROR);
+				}
+
+				break;
 			}
 
-			AST retast_ref;
-			retast_ref.function.function_name = current.scope;
-
-			type = strdup(function_buffer[definiton_control("function", retast_ref)]
-			.function.function_type);
-
-			break;
-		default:
-	}
-
-	switch (e->type)
-	{
-    	case NODE_INT_LITERAL:
-    		break;
-        case NODE_IDENTIFIER:
-        	AST expriden_ref;
-        	expriden_ref.var.name = e->identifier;
-
-			int index_var = definiton_control("var", expriden_ref);
-			int index_func = definiton_control("function", expriden_ref);
-					
-        	if ((index_var + index_func) == -2)
+			semantic_error(source_files[0], ast_root.line, ast_root.column, 
+							ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
+							e->identifier, UNDEFINED);
+        case NODE_BINARY:
+        	if (is_int(data_type) < 1)
         	{
-        		semantic_error(source_files[0], current.line, current.column,
-        						current.scope, current.scpline, current.scpcolumn, 
-        						expriden_ref.var.name, UNDEFINED);
+           		semantic_error(source_files[0], ast_root.line,  ast_root.column, 
+           						ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
+           						NULL, TYPE_ERROR);
         	}
 
-        	if (index_var > -1)
-			{
-				
-			}
-			
-        	if (index_func > -1)
-        	{
-        		
-        	} 
-        	
-        	break;
-        case NODE_BINARY:
-            expr_control(current, e->binary.left);
-            expr_control(current, e->binary.right);
+            expr_control(ast_root, data_type, e->binary.left);
+            expr_control(ast_root, data_type, e->binary.right);
             break;
         case NODE_UNARY:
+        	if (is_int(data_type) < 1)
+        	{
+        		semantic_error(source_files[0], ast_root.line,  ast_root.column, 
+        						ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
+        						NULL, TYPE_ERROR);
+        	}
 
-            expr_control(current, e->unary.value);
+            expr_control(ast_root, data_type, e->unary.value);
             break;
 		case NODE_CALL:
-			AST ref;
-			ref.call.callee = e->call.callee;
-			definiton_control("function", ref);
+			if (strcmp(ast_root.scope, "global") == 0)
+			{
+				semantic_error(source_files[0], ast_root.line, ast_root.column,
+								ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
+								ast_root.label.name, WITHOUT_FUNCTION);
+			}
 
-            for (unsigned int i = 0; i < e->call.argc; i++)
-            	expr_control(current, e->call.args[i]);
+			ref.scope = ast_root.scope;
+			ref.function.name = e->call.callee;
 
+			index = definiton_control("function", ref);
+
+            if (index > -1)
+            {
+            	// Args type control
+            	if (function_buffer[index].function.argc != e->call.argc)
+            	{
+            		semantic_error(source_files[0], ast_root.line, ast_root.column,
+            						ast_root.scope, ast_root.scpline, ast_root.scpcolumn, 
+            						NULL, ARGC_MISSMATCH);
+            	}
+
+				printf("%d", e->call.argc);
+            	if (e->call.argc == 0)
+            		break;
+
+            	for (unsigned int i = 0; i < e->call.argc; i++)
+            	{
+            		if (e->call.args[i] != NULL)
+            		{
+            			expr_control(ast_root, function_buffer[index].function.args[i].type, 
+									  e->call.args[i]);
+            		}
+            	}
+
+            	// Call return type control
+            	if (is_int(function_buffer[index].function.type) && is_int(data_type))
+            		break;
+
+            	if (strcmp(function_buffer[index].function.type, data_type) != 0)
+            	{
+            		semantic_error(source_files[0], ast_root.line,  ast_root.column,
+            						ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
+            						e->identifier, TYPE_ERROR);
+            	}
+
+            	break;
+            }
+
+			semantic_error(source_files[0], ast_root.line, ast_root.column,
+							ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
+							e->identifier, UNDEFINED);
         default:
-	}
-
-	return 1;
+    }
 }
-*/
 
 void semantic_main()
 {
 	var_buffer = malloc(sizeof(AST) * 2);
 	function_buffer = malloc(sizeof(AST) * 2);
+	label_buffer = malloc(sizeof(AST) * 2);
 
 	for (unsigned int i = 0; i < ast_counter; i++)
 	{
+		int index = 0;
+
 		switch (ast[i].type)
 		{
+			case LABEL:
+				if (strcmp(ast[i].scope, "global") == 0)
+				{
+					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
+									ast[i].label.name, WITHOUT_FUNCTION);
+				}
+
+				if (definiton_control("label", ast[i]) > -1)
+				{
+					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
+									ast[i].label.name, REDEFINITION);
+				}
+
+				label_buffer[label_counter] = ast[i];
+				label_counter++;
+				label_buffer = realloc(label_buffer, sizeof(AST) * label_counter * 2);
+				break;
+			case JUMPER:
+				if (strcmp(ast[i].scope, "global") == 0)
+				{
+					semantic_error(source_files[0], ast[i].line, ast[i].column,
+									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
+									ast[i].label.name, WITHOUT_FUNCTION);
+				}
+
+				expr_control(ast[i], "integer", ast[i].jumper.condition);
+
+				AST jumper_ref;
+				jumper_ref.label.name = ast[i].jumper.label;
+				jumper_ref.scope = ast[i].scope;
+
+				if (definiton_control("label", jumper_ref) > -1)
+					break;
+
+				for (unsigned int c = i;;c++)
+				{
+					if (ast[c].type == LABEL && strcmp(ast[c].label.name, ast[i].jumper.label) == 0)
+						break;
+
+					if(!(c < ast_counter) || strcmp(ast[c].scope, ast[i].scope) != 0)
+					{
+						semantic_error(source_files[0], ast[i].line, ast[i].column,
+										ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
+										ast[i].label.name, UNDEFINED);
+					}
+				}
+
+				break;
 			case UVAR:
 			case VAR:
 				if (definiton_control("var", ast[i]) > -1)
@@ -177,10 +289,8 @@ void semantic_main()
 									ast[i].var.name, REDEFINITION);
 				}
 
-			/*
 				if (ast[i].var.value != NULL)
-					expr_control(ast[i], ast[i].var.value);
-			*/
+					expr_control(ast[i], ast[i].var.type, ast[i].var.value);
 
 				var_buffer[var_counter] = ast[i];
 				var_counter++;
@@ -191,7 +301,7 @@ void semantic_main()
 				{
 					semantic_error(source_files[0], ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
-									ast[i].function.function_name, REDEFINITION);
+									ast[i].function.name, REDEFINITION);
 				}
 
 				function_buffer[function_counter] = ast[i];
@@ -199,18 +309,30 @@ void semantic_main()
 				function_buffer = realloc(function_buffer, sizeof(AST) * function_counter * 2);
 				break;
 			case RETURN:
-			/*
-				if (ast[i]._return.value != NULL)
-					expr_control(ast[i], ast[i]._return.value);
-				else
+				if (strcmp(ast[i].scope, "global") == 0)
 				{
 					semantic_error(source_files[0], ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
-									NULL, CANNOT_RETNULLVAL);
+									ast[i].label.name, WITHOUT_FUNCTION);
 				}
-			*/
+
+				AST return_ref;
+				return_ref.function.name = ast[i].scope;
+
+				char* return_type = function_buffer[definiton_control("function", return_ref)]
+									.function.type;
+				
+				if (ast[i]._return.value != NULL)
+					expr_control(ast[i], return_type, ast[i]._return.value);
+
 				break;
 			case PARSE_ASSIGNMENT:
+				if (strcmp(ast[i].scope, "global") == 0)
+				{
+					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
+									ast[i].label.name, WITHOUT_FUNCTION);
+				}
 
 				/*
 					Created AST references because
@@ -219,24 +341,61 @@ void semantic_main()
 
 				AST assgnmnt_ref;
 				assgnmnt_ref.var.name = ast[i].assignment.name;
+				assgnmnt_ref.scope = ast[i].scope;
+				index = definiton_control("var", assgnmnt_ref); 
 
-				if (definiton_control("var", assgnmnt_ref) < 0)
+				if (index < 0)
 				{
 					semantic_error(source_files[0], ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn, 
 									ast[i].assignment.name, UNDEFINED);
 				}
 
+				/*
+					No null expression control because 
+					assignment expression cannot be null there	
+				*/
+
+				const char* assignment_type = var_buffer[index].var.type;
+				
+				expr_control(ast[i], assignment_type, ast[i].assignment.value);
 				break;
 			case CALL:
-				AST call_ref;
-				call_ref.function.function_name = ast[i].call.callee;
+				if (strcmp(ast[i].scope, "global") == 0)
+				{
+					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
+									ast[i].label.name, WITHOUT_FUNCTION);
+				}
 
-				if (definiton_control("function", call_ref) < 0)
+				AST call_ref;
+				call_ref.function.name = ast[i].call.callee;
+				index = definiton_control("function", call_ref);
+
+				if (index < 0)
 				{
 					semantic_error(source_files[0], ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn, 
 									ast[i].call.callee, UNDEFINED);
+				}
+
+				if (function_buffer[index].function.argc != ast[i].call.argc)
+				{
+					semantic_error(source_files[0], ast[i].line, ast[i].column,
+									ast[i].scope, ast[i].scpline, ast[i].scpcolumn, 
+									NULL, ARGC_MISSMATCH);
+				}
+
+				if (ast[i].call.argc == 0)
+					break;
+
+				// Args type control
+				for (unsigned int c = 0; c < ast[i].call.argc; c++)
+				{
+					const char* type = function_buffer[index].function.args[c].type;
+
+					if (ast[i].call.args[c]->identifier != NULL)
+						expr_control(ast[i], type, ast[i].call.args[c]);
 				}
 			default:
 		}

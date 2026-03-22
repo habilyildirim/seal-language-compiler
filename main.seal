@@ -1,16 +1,13 @@
 INCLUDE "test.lbnz"
 INCLUDE "testio.lbnz"
 
-DEFINE TEST_VAL 11 $
-
-#integer32 foo()
-{
-	integer foo;
-}
-
-integer test;
-
 #integer32 main()
 {
-	foo();
+	integer32 a = 0;
+
+	:test		
+		a = a + 1;
+	jump (a != 10) test;
+
+	return a;
 }

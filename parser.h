@@ -88,15 +88,15 @@ typedef struct
 
 		struct
 		{
-			char* macro_name;
-			char* macro_value;
+			char* name;
+			char* value;
 		}
 		macro;
 		
 		struct
 		{
-			char* function_type;
-			char* function_name;
+			char* type;
+			char* name;
 			struct var* args;
 			unsigned int argc;
 		}
@@ -120,7 +120,6 @@ typedef struct
 		{
 			char* label;
 			struct EXPR* condition;
-			
 		}
 		jumper;
 
