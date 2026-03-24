@@ -98,11 +98,11 @@ int isbinop (const char* value)
 
 int is_integer(const char* c)
 {
-    if (c == NULL || *c == '\0')
-        return 0;
+	for (unsigned int i = 0; i < strlen(c); i++)
+	{
+		if (!isdigit(c[i]) && c[i] != '.')
+			return 0;
+	}
 
-    char* end;
-    strtol(c, &end, 10);
-
-    return *end == '\0';
+	return 1;
 }

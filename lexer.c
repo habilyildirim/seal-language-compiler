@@ -507,13 +507,21 @@ void read_integer_literal(unsigned int *i)
 
 	/* ==== DECIMAL ==== */
 
-	for (;isdigit(buffer[*i]); (*i)++)
+	for (unsigned int dot_counter = 0; isdigit(buffer[*i]) || buffer[*i] == '.'; (*i)++)
 	{
+		if (buffer[*i] == '.')
+			dot_counter++;
+		else
+			dot_counter = 0;
+
+		if (dot_counter > 1)
+			lexer_error(source_files[0], line_counter, column_counter, MULTIPLE_DOTS);
+
 		update_position(*i);
 		read_buffer(buffer, *i, READ_INTEGER_LITERAL);
 	}
 
-	if (isalpha(buffer[*i]))
+	if (isalpha(buffer[*i]) || strcmp(lexeme_buffer, ".") == 0)
 		lexer_error(source_files[0], line_counter, column_counter, IS_NOT_DECIMAL);
 
 	emit_token(INTEGER_LITERAL, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
@@ -565,7 +573,8 @@ void lexer_main(const _ar sources_list)
 			continue;
 		}
 
-		if (buffer_mod == READ && (lexeme_buffer[0] == '\0' && isdigit(buffer[i])))
+		if (buffer_mod == READ && (lexeme_buffer[0] == '\0' && 
+			(isdigit(buffer[i]) || buffer[i] == '.')))
 			buffer_mod = READ_INTEGER_LITERAL;
 
 		if (buffer_mod == READ && buffer[i] == '\"')
@@ -609,7 +618,7 @@ void lexer_main(const _ar sources_list)
 			Scan the word for detection 
 			identifier and the keyword.
 		*/
-
+		
 		scan_word(&dt, i);
 		scan_operator(&lo, &ro, &i);
 		scan_symbol(&lo, &ro, i);

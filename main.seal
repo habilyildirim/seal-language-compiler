@@ -3,8 +3,9 @@ INCLUDE "testio.lbnz"
 
 #integer32 main()
 {
-	integer32 a = 0;
-
+	integer32 c = 11;
+	integer32 a = .1;
+	
 	:test		
 		a = a + 1;
 	jump (a != 10) test;

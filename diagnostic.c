@@ -102,6 +102,9 @@ void lexer_error(const char* source_file, const unsigned int line, const unsigne
 		case IS_NOT_DECIMAL:
 			printf("| This char is not decimal(number)\n");
 			exit(1);
+		case MULTIPLE_DOTS:
+			printf("| Multiple dots\n");
+			exit(1);
 		case IDENTIFIER_OVERFLOW:
 			printf("| Identifier name overflow. Identifier name must be 256(max) char\n");
 			exit(1);

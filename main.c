@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 	}
 
 	lexer_main(sources_list);
-	//print_tokens(1);
+	print_tokens(1);
 
 	parser_main();
 	//print_ast(0);

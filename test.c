@@ -7,13 +7,14 @@
 void print_tokens(unsigned int ex)
 {
 	for (unsigned int i = 0; i < tokens_counter; i++)
+	{
 		printf("%d %s line->%d column->%d\n",
 			i,
 			tokens[i].value,
 			tokens[i].line,
 			tokens[i].column
 		);
-
+	}
 	
 	if (ex)
 		exit(0);
@@ -24,7 +25,7 @@ void print_tokens(unsigned int ex)
     	if (!e) 
     		return;
 
-    	switch(e->type)
+    	switch (e->type)
     	{
         	case NODE_INT_LITERAL: 
             	printf("%s", e->literal); 
