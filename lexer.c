@@ -324,10 +324,29 @@ void scan_symbol(_token_type *ro, _token_type *lo, const uint i)
 	}
 }
 
+void lexemebuffer_rcontrol()
+{
+    if (lexeme_buffer_counter + 2 > lexeme_buffer_size)
+    {
+        lexeme_buffer_size *= 2;
+        char* tmp = realloc(lexeme_buffer, lexeme_buffer_size);
+        
+        if (!tmp) 
+        {
+            fprintf(stderr, "Lexer realloc error\n");
+            exit(1);
+        }
+
+        lexeme_buffer = tmp;
+    }
+}
+
 void read_buffer(const char* buffer, const uint i, _buffer_mod BUFFER_MOD)
 {
 	if (BUFFER_MOD == READ_STRING_LITERAL || BUFFER_MOD == READ_ESCAPE)
 	{
+		lexemebuffer_rcontrol();
+	
 		if (BUFFER_MOD == READ_ESCAPE)
 			lexeme_buffer[lexeme_buffer_counter] = *buffer;
 		else
@@ -341,6 +360,8 @@ void read_buffer(const char* buffer, const uint i, _buffer_mod BUFFER_MOD)
 
 	if (_isalnum(buffer[i]) || BUFFER_MOD == READ_INTEGER_LITERAL)
 	{
+		lexemebuffer_rcontrol();
+		
 		lexeme_buffer[lexeme_buffer_counter] = buffer[i];
 		lexeme_buffer[lexeme_buffer_counter + 1] = '\0';
 		lexeme_buffer_counter++;
