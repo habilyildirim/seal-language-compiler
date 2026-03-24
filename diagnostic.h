@@ -1,5 +1,6 @@
 #ifndef DIAGNOSTIC_H
 #define DIAGNOSTIC_H
+#include <stdlib.h>
 
 typedef enum
 {
@@ -54,17 +55,17 @@ typedef enum
 }
 IR_LAYER_ERROR_TYPE;
 
-void lexer_error(const char* source_file, const unsigned int line, const unsigned int column, 
+void lexer_error(const char* source_file, const uint line, const uint column, 
 					const LEXER_LAYER_ERROR_TYPE ERROR_TYPE);
 
-void parser_error(const char* source_file, const unsigned int line, const unsigned int column, 
+void parser_error(const char* source_file, const uint line, const uint column, 
 					const PARSER_LAYER_ERROR_TYPE ERROR_TYPE);
 
-void semantic_error(const char* source_file, const unsigned int line, const unsigned int column, const char* scope, 
-						const unsigned int scpline, const unsigned int scpcolumn, 
+void semantic_error(const char* source_file, const uint line, const uint column, const char* scope, 
+						const uint scpline, const uint scpcolumn, 
 						const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE);
 
-void ir_error(const char* source_file, const unsigned int line, const unsigned int column, 
+void ir_error(const char* source_file, const uint line, const uint column, 
 				const IR_LAYER_ERROR_TYPE ERROR_TYPE);
 
 #endif

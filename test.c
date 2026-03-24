@@ -4,9 +4,9 @@
 #include "lexer.h"
 #include "parser.h"
 
-void print_tokens(unsigned int ex)
+void print_tokens(uint ex)
 {
-	for (unsigned int i = 0; i < tokens_counter; i++)
+	for (uint i = 0; i < tokens_counter; i++)
 	{
 		printf("%d %s line->%d column->%d\n",
 			i,
@@ -49,7 +49,7 @@ void print_tokens(unsigned int ex)
             	printf("(");
             	printf("call>%s ", e->call.callee);
             	
-            	for (unsigned int i = 0; i < e->call.argc; i++)
+            	for (uint i = 0; i < e->call.argc; i++)
             	{
             		print_expr(e->call.args[i]);
             		printf("<");
@@ -61,9 +61,9 @@ void print_tokens(unsigned int ex)
     	}
 	}
 
-void print_ast(unsigned int ex)
+void print_ast(uint ex)
 {
-	for (unsigned int i = 0; i < ast_counter; i++)
+	for (uint i = 0; i < ast_counter; i++)
 	{
 		switch (ast[i].type)
 		{
@@ -88,7 +88,7 @@ void print_ast(unsigned int ex)
 				printf("	->ARGC; %d\n", ast[i].call.argc);
 				printf("	->ARGS -> \n");
 
-				for (unsigned int j = 0; j < ast[i].call.argc; j++)
+				for (uint j = 0; j < ast[i].call.argc; j++)
 				{
 					printf("		ARG %d ", j);
 					print_expr(ast[i].call.args[j]);

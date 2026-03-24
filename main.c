@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 	
 	int sources_i_counter = 0;
 
-	for (unsigned int i = 1; i < (unsigned int)argc; i++)
+	for (uint i = 1; i < (uint)argc; i++)
 	{
 		if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "-output") == 0)
 			break;
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 	}
 
 	lexer_main(sources_list);
-	print_tokens(1);
+	//print_tokens(1);
 
 	parser_main();
 	//print_ast(0);

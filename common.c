@@ -32,13 +32,13 @@ int _isalnum(const char c)
 	return 0;
 }
 
-void clear_buffer(char *buffer, unsigned int *buffer_counter)
+void clear_buffer(char *buffer, uint *buffer_counter)
 {
 	memset(buffer, 0, sizeof((char*)buffer));
 	(*buffer_counter) = 0;
 }
 
-char* open_buffer(const char* source, unsigned int *buffersize)
+char* open_buffer(const char* source, uint *buffersize)
 {
 	FILE* buffer_source;
 
@@ -55,8 +55,8 @@ char* open_buffer(const char* source, unsigned int *buffersize)
 		return NULL;
 	}
 
-	unsigned long buffer_size = ftell(buffer_source);
-	                            rewind(buffer_source);
+	 ulong buffer_size = ftell(buffer_source);
+	                     rewind(buffer_source);
 
 	(*buffersize) = buffer_size;
 
@@ -98,7 +98,7 @@ int isbinop (const char* value)
 
 int is_integer(const char* c)
 {
-	for (unsigned int i = 0; i < strlen(c); i++)
+	for (uint i = 0; i < strlen(c); i++)
 	{
 		if (!isdigit(c[i]) && c[i] != '.')
 			return 0;

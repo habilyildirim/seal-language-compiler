@@ -25,19 +25,19 @@
 #include "diagnostic.h"
 
 AST* var_buffer;
-unsigned int var_counter = 0;
+uint var_counter = 0;
 
 AST* function_buffer;
-unsigned int function_counter = 0;
+uint function_counter = 0;
 
 AST* label_buffer;
-unsigned int label_counter = 0;
+uint label_counter = 0;
 
 int definiton_control(const char* type, const AST current)
 {
 	if (strcmp(type, "var") == 0)
 	{
-		for (unsigned int i = 0; i < var_counter; i++)
+		for (uint i = 0; i < var_counter; i++)
 		{
 			if (strcmp(current.var.name, var_buffer[i].var.name) == 0 && 
 				(strcmp(current.scope, var_buffer[i].scope) == 0 || 
@@ -45,7 +45,7 @@ int definiton_control(const char* type, const AST current)
 				return i;
 		}
 
-		for (unsigned int i = 0; i < function_counter; i++)
+		for (uint i = 0; i < function_counter; i++)
 		{
 			if (strcmp(current.var.name, function_buffer[i].function.name) == 0 &&
 				strcmp(current.scope, "global") == 0)
@@ -55,14 +55,14 @@ int definiton_control(const char* type, const AST current)
 
 	if (strcmp(type, "function") == 0)
 	{
-		for (unsigned int i = 0; i < function_counter; i++)
+		for (uint i = 0; i < function_counter; i++)
 		{
 			if (strcmp(current.function.name, 
 				function_buffer[i].function.name) == 0)
 				return i;
 		}
 
-		for (unsigned int i = 0; i < var_counter; i++)
+		for (uint i = 0; i < var_counter; i++)
 		{
 			if (strcmp(current.function.name, var_buffer[i].var.name) == 0 &&
 				strcmp(var_buffer[i].scope, "global") == 0)
@@ -72,7 +72,7 @@ int definiton_control(const char* type, const AST current)
 
 	if (strcmp(type, "label") == 0)
 	{
-		for (unsigned int i = 0; i < label_counter; i++)
+		for (uint i = 0; i < label_counter; i++)
 		{
 			if (strcmp(current.label.name, label_buffer[i].label.name) == 0 && 
 				strcmp(current.scope, label_buffer[i].scope) == 0)
@@ -188,7 +188,7 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
             	if (e->call.argc == 0)
             		break;
 
-            	for (unsigned int i = 0; i < e->call.argc; i++)
+            	for (uint i = 0; i < e->call.argc; i++)
             	{
             		if (e->call.args[i] != NULL)
             		{
@@ -224,7 +224,7 @@ void semantic_main()
 	function_buffer = malloc(sizeof(AST) * 2);
 	label_buffer = malloc(sizeof(AST) * 2);
 
-	for (unsigned int i = 0; i < ast_counter; i++)
+	for (uint i = 0; i < ast_counter; i++)
 	{
 		int index = 0;
 
@@ -266,7 +266,7 @@ void semantic_main()
 				if (definiton_control("label", jumper_ref) > -1)
 					break;
 
-				for (unsigned int c = i;;c++)
+				for (uint c = i;;c++)
 				{
 					if (ast[c].type == LABEL && strcmp(ast[c].label.name, ast[i].jumper.label) == 0)
 						break;
@@ -390,7 +390,7 @@ void semantic_main()
 					break;
 
 				// Args type control
-				for (unsigned int c = 0; c < ast[i].call.argc; c++)
+				for (uint c = 0; c < ast[i].call.argc; c++)
 				{
 					const char* type = function_buffer[index].function.args[c].type;
 

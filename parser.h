@@ -1,5 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
+#include <stdlib.h>
 
 typedef enum 
 {
@@ -54,7 +55,7 @@ typedef struct EXPR
         {
             char* callee;
             struct EXPR** args;
-            unsigned int argc;
+            uint argc;
         }
         call;
     };
@@ -64,13 +65,13 @@ EXPR;
 typedef struct
 {
 	_AST_TYPE type;
-	unsigned int seq;
+	uint seq;
 
-	unsigned int line;
-	unsigned int column;
+	uint line;
+	uint column;
 
-	unsigned int scpline;
-	unsigned int scpcolumn;
+	uint scpline;
+	uint scpcolumn;
 	char* scope;
 
 	union
@@ -98,7 +99,7 @@ typedef struct
 			char* type;
 			char* name;
 			struct var* args;
-			unsigned int argc;
+			uint argc;
 		}
 		function;
 
@@ -106,7 +107,7 @@ typedef struct
 		{
             char* callee;
             struct EXPR** args;
-            unsigned int argc;
+            uint argc;
 		}
 		call;
 
@@ -148,7 +149,7 @@ typedef struct
 AST;
 
 extern AST* ast;
-extern unsigned int ast_counter;
+extern uint ast_counter;
 
 void parser_main();
 

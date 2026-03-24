@@ -104,7 +104,7 @@ const _keyword keyword_table[] =
 
 _token_type query_symbol(const char lexeme)
 {
-	for (unsigned int i = 0; i < SYMBOL_TABLE_LENGTH; i++)
+	for (uint i = 0; i < SYMBOL_TABLE_LENGTH; i++)
 	{
 		if (lexeme == symbol_table[i].lexeme)
 			return symbol_table[i].token_type;
@@ -113,7 +113,7 @@ _token_type query_symbol(const char lexeme)
 	return SYMBOL_INVALID;
 }
 
-_token_type query_loperator_token(const char *lexeme, unsigned int *i)
+_token_type query_loperator_token(const char *lexeme, uint *i)
 {
 	// This control is for the != and ! not to overlap
 	if (strcmp(lexeme, "!=") == 0)
@@ -121,7 +121,7 @@ _token_type query_loperator_token(const char *lexeme, unsigned int *i)
 
 	char single_operant[2] = {(char)lexeme[0], '\0'};
 
-	for (unsigned int c = 0; c < LOGICAL_OPERATOR_TABLE_LENGTH; c++)
+	for (uint c = 0; c < LOGICAL_OPERATOR_TABLE_LENGTH; c++)
 	{
 		if (strcmp(lexeme, logical_operator_table[c].lexeme) == 0)
 		{
@@ -136,11 +136,11 @@ _token_type query_loperator_token(const char *lexeme, unsigned int *i)
 	return NON;
 }
 
-_token_type query_roperator_token(const char *lexeme, unsigned int *i)
+_token_type query_roperator_token(const char *lexeme, uint *i)
 {
 	char single_operant[2] = {(char)lexeme[0], '\0'};
 
-	for (unsigned int c = 0; c < RELATIONAL_OPERATOR_TABLE_LENGTH; c++)
+	for (uint c = 0; c < RELATIONAL_OPERATOR_TABLE_LENGTH; c++)
 	{
 		if (strcmp(lexeme, relational_operator_table[c].lexeme) == 0)
 		{
@@ -157,7 +157,7 @@ _token_type query_roperator_token(const char *lexeme, unsigned int *i)
 
 _token_type query_data_type(const char *lexeme)
 {
-	for (unsigned int c = 0; c < DATA_TYPE_TABLE_LENGTH; c++)
+	for (uint c = 0; c < DATA_TYPE_TABLE_LENGTH; c++)
 	{
 		if (strcmp(lexeme, data_type_table[c].lexeme) == 0)
 			return data_type_table[c].token_type;
@@ -168,7 +168,7 @@ _token_type query_data_type(const char *lexeme)
 
 _token_type query_keyword(const char *lexeme)
 {
-	for (unsigned int c = 0; c < KEYWORD_TABLE_LENGTH; c++)
+	for (uint c = 0; c < KEYWORD_TABLE_LENGTH; c++)
 	{
 		if (strcmp(lexeme, keyword_table[c].lexeme) == 0)
 			return keyword_table[c].token_type;
@@ -180,7 +180,7 @@ _token_type query_keyword(const char *lexeme)
 	return IDENTIFIER;
 }
 
-void emit_token(const _token_type tt, _token_group tg, const char* value, const unsigned int tokens_counter, const unsigned int line_counter, unsigned int column_counter)
+void emit_token(const _token_type tt, _token_group tg, const char* value, const uint tokens_counter, const uint line_counter, uint column_counter)
 {
 	if (strlen(value) > 255)
 		lexer_error(source_files[0], line_counter, column_counter, IDENTIFIER_OVERFLOW);
@@ -231,21 +231,21 @@ _buffer_mod;
 _ar source_files;
 
 char* buffer = NULL;
-unsigned int buffersize = 0;
+uint buffersize = 0;
 
-unsigned int lexeme_buffer_size = 32;
-unsigned int lexeme_buffer_counter = 0;
+uint lexeme_buffer_size = 32;
+uint lexeme_buffer_counter = 0;
 char* lexeme_buffer = {0};
 
 _token* tokens = NULL;
-unsigned int tokens_counter = 0;
+uint tokens_counter = 0;
 
-unsigned int line_counter = 1;
-unsigned int column_counter = 1;
+uint line_counter = 1;
+uint column_counter = 1;
 
 _buffer_mod buffer_mod = READ;
 
-void scan_word(_token_type *dt, const unsigned int i)
+void scan_word(_token_type *dt, const uint i)
 {
 	/*
 		_isalnum -> If parameter is equal to '_'
@@ -269,7 +269,7 @@ void scan_word(_token_type *dt, const unsigned int i)
 	}
 }
 
-void scan_operator(_token_type *lo, _token_type *ro, unsigned int *i)
+void scan_operator(_token_type *lo, _token_type *ro, uint *i)
 {
 	char operator_tmp[3] = {buffer[*i], buffer[*i + 1], '\0'};
 
@@ -310,7 +310,7 @@ void scan_operator(_token_type *lo, _token_type *ro, unsigned int *i)
 	}
 }
 
-void scan_symbol(_token_type *ro, _token_type *lo, const unsigned int i)
+void scan_symbol(_token_type *ro, _token_type *lo, const uint i)
 {
 	if ((!_isalnum(buffer[i]) && !isspace(buffer[i])) && (*ro == NON && *lo == NON))
 	{
@@ -324,7 +324,7 @@ void scan_symbol(_token_type *ro, _token_type *lo, const unsigned int i)
 	}
 }
 
-void read_buffer(const char* buffer, const unsigned int i, _buffer_mod BUFFER_MOD)
+void read_buffer(const char* buffer, const uint i, _buffer_mod BUFFER_MOD)
 {
 	if (BUFFER_MOD == READ_STRING_LITERAL || BUFFER_MOD == READ_ESCAPE)
 	{
@@ -349,7 +349,7 @@ void read_buffer(const char* buffer, const unsigned int i, _buffer_mod BUFFER_MO
 	}
 }
 
-void update_position(const unsigned int i)
+void update_position(const uint i)
 {
 	// Position for diagnostic
 
@@ -362,7 +362,7 @@ void update_position(const unsigned int i)
 	}
 }
 
-void read_string_literal(unsigned int *i, const unsigned int is_charliteral)
+void read_string_literal(uint *i, const uint is_charliteral)
 {
 	if (buffer_mod != READ_STRING_LITERAL)
 		return;
@@ -451,12 +451,12 @@ void read_string_literal(unsigned int *i, const unsigned int is_charliteral)
 	}
 }
 
-void read_char_literal(unsigned int *i)
+void read_char_literal(uint *i)
 {
 	read_string_literal(&(*i), 1);
 }
 
-void read_integer_literal(unsigned int *i)
+void read_integer_literal(uint *i)
 {
 	if (buffer_mod != READ_INTEGER_LITERAL)
 		return;
@@ -507,7 +507,7 @@ void read_integer_literal(unsigned int *i)
 
 	/* ==== DECIMAL ==== */
 
-	for (unsigned int dot_counter = 0; isdigit(buffer[*i]) || buffer[*i] == '.'; (*i)++)
+	for (uint dot_counter = 0; isdigit(buffer[*i]) || buffer[*i] == '.'; (*i)++)
 	{
 		if (buffer[*i] == '.')
 			dot_counter++;
@@ -537,7 +537,7 @@ void lexer_main(const _ar sources_list)
 
 	source_files = sources_list;
 	
-	for (unsigned int i = 0; i < buffersize; i++)
+	for (uint i = 0; i < buffersize; i++)
 	{		
 		if (lexeme_buffer_counter + 1 >= lexeme_buffer_size)
 		{

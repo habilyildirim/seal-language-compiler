@@ -139,17 +139,17 @@ typedef struct
 			  // LEXEME_BUFFER_LEN
 	char value[256];
 
-	unsigned int line;
-	unsigned int column;
+	uint line;
+	uint column;
 }
 _token;
 
 extern _token* tokens;
-extern unsigned int tokens_counter;
+extern uint tokens_counter;
 
 extern _ar source_files;
 
 void lexer_main(const _ar sources_list);
-void print_tokens(unsigned int ex);
+void print_tokens(uint ex);
 
 #endif

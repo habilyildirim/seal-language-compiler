@@ -22,22 +22,22 @@
 #include "common.h"
 #include "diagnostic.h"
 
-unsigned int tab_counter = 0;
+uint tab_counter = 0;
 
-void print_lines(const char* source_file, const unsigned int line)
+void print_lines(const char* source_file, const uint line)
 {
 	char* file = NULL;
-	unsigned int filesize = 0;
+	uint filesize = 0;
 
 	file = open_buffer(source_file, &filesize);
 
-	unsigned int c = 1;
+	uint c = 1;
 
-	for (unsigned int i = 0; i != filesize; i++)
+	for (uint i = 0; i != filesize; i++)
 	{
 		if (c == line)
 		{
-			for (unsigned int t = i; file[t] == '\t'; t++)
+			for (uint t = i; file[t] == '\t'; t++)
 				tab_counter++;
 		}
 
@@ -61,9 +61,9 @@ void print_lines(const char* source_file, const unsigned int line)
 	}
 }
 
-void print_caret(unsigned int column)
+void print_caret(uint column)
 {
-	for (unsigned int i = 0; i < tab_counter; i++)
+	for (uint i = 0; i < tab_counter; i++)
 		printf("~~~~~~~");
 
 	if (column == 1)
@@ -73,13 +73,13 @@ void print_caret(unsigned int column)
 		return;
 	}
 
-	for (unsigned int i = 1; i < column + 8; i++)
+	for (uint i = 1; i < column + 8; i++)
 		printf("~");
 
 	printf("^\n");
 }
 
-void lexer_error(const char* source_file, const unsigned int line, const unsigned int column, const LEXER_LAYER_ERROR_TYPE ERROR_TYPE)
+void lexer_error(const char* source_file, const uint line, const uint column, const LEXER_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("lexer-err~~> %s:%d:%d\n\n", source_file, line, column);
 	print_lines(source_file, line);
@@ -114,7 +114,7 @@ void lexer_error(const char* source_file, const unsigned int line, const unsigne
 	}
 }
 
-void parser_error(const char* source_file, const unsigned int line, const unsigned int column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE)
+void parser_error(const char* source_file, const uint line, const uint column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("parser-err~~> %s:%d:%d\n\n", source_file, line, column);
 	print_lines(source_file, line);
@@ -170,8 +170,8 @@ void parser_error(const char* source_file, const unsigned int line, const unsign
 	}
 }
 
-void semantic_error(const char* source_file, const unsigned int line, const unsigned int column, const char* scope, const unsigned int scpline,
-												const unsigned int scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
+void semantic_error(const char* source_file, const uint line, const uint column, const char* scope, const uint scpline,
+												const uint scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("semantic-err~~> %s:%d:%d\n", source_file, line, column);
 	printf("         ^~in~~> %s:%d:%d\n", scope, scpline, scpcolumn);
@@ -214,7 +214,7 @@ void semantic_error(const char* source_file, const unsigned int line, const unsi
 }
 
 /*
-void ir_error(const char* source_file, const unsigned int line, const unsigned int column, const IR_LAYER_ERROR_TYPE ERROR_TYPE)
+void ir_error(const char* source_file, const uint line, const uint column, const IR_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("ir-err~~> %s:%d:%d\n", source_file, line, column);
 	print_lines(source_file, line);

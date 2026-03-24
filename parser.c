@@ -27,7 +27,7 @@
 #define _operators _token_type
 #define _dtype _token_type
 
-void overflow_control(const unsigned int c, PARSER_LAYER_ERROR_TYPE err)
+void overflow_control(const uint c, PARSER_LAYER_ERROR_TYPE err)
 {
 	if (c >= tokens_counter)
 		parser_error(source_files[0], tokens[c - 1].line, tokens[c - 1].column, err);
@@ -59,9 +59,9 @@ int get_precedence(_token t)
 }
 
 EXPR* parse_expression
-(unsigned int *i, int precedence);
+(uint *i, int precedence);
 
-EXPR* parse_primary(unsigned int *i)
+EXPR* parse_primary(uint *i)
 {
 	overflow_control(*i, WRONG_EXPRESSION);
 
@@ -153,7 +153,7 @@ EXPR* parse_primary(unsigned int *i)
 	parser_error(source_files[0], tok.line, tok.column, WRONG_EXPRESSION);
 }
 
-EXPR* parse_expression(unsigned int *i, int precedence)
+EXPR* parse_expression(uint *i, int precedence)
 {
     EXPR* left = parse_primary(&(*i));
 
@@ -163,7 +163,7 @@ EXPR* parse_expression(unsigned int *i, int precedence)
     {
         _token tok_op = tokens[*i];
         char* op = strdup(tok_op.value);
-        unsigned int op_prec = get_precedence(tok_op);
+        uint op_prec = get_precedence(tok_op);
 
         (*i)++;
         EXPR* right = parse_expression(i, op_prec + 1);
@@ -200,7 +200,7 @@ void free_expr(EXPR* e)
             free(e->literal);
             break;
         case NODE_CALL:
-            for (unsigned int i = 0; i < e->call.argc; i++)
+            for (uint i = 0; i < e->call.argc; i++)
                 free_expr(e->call.args[i]);
         default:
             break;
@@ -209,7 +209,7 @@ void free_expr(EXPR* e)
     free(e);
 }
 
-AST parse_include(unsigned int *i, unsigned int c)
+AST parse_include(uint *i, uint c)
 {
 	AST result;
 
@@ -225,7 +225,7 @@ AST parse_include(unsigned int *i, unsigned int c)
 	return result;
 }
 
-AST parse_macro(unsigned int *i, unsigned int c)
+AST parse_macro(uint *i, uint c)
 {
 	AST result;
 	
@@ -266,7 +266,7 @@ AST parse_macro(unsigned int *i, unsigned int c)
 	return result;
 }
 
-AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
+AST parse_var(uint *i, uint is_unsigned, uint c)
 {
 	AST result;
 	
@@ -346,7 +346,7 @@ AST parse_var(unsigned int *i, unsigned int is_unsigned, unsigned int c)
 	return result;
 }
 
-AST parse_assignment(unsigned int *i, unsigned int c)
+AST parse_assignment(uint *i, uint c)
 {
 	AST result;
 	
@@ -374,7 +374,7 @@ AST parse_assignment(unsigned int *i, unsigned int c)
 	return result;
 }
 
-AST parse_call(unsigned int *i, unsigned int c)
+AST parse_call(uint *i, uint c)
 {
 	AST result;
 
@@ -388,7 +388,7 @@ AST parse_call(unsigned int *i, unsigned int c)
 	result.call.argc = inner_ast->call.argc;
 	result.call.args = NULL;
 	
-	for (unsigned int j = 0; j < inner_ast->call.argc; j++)
+	for (uint j = 0; j < inner_ast->call.argc; j++)
 	{
 		result.call.args = realloc(result.call.args, sizeof(EXPR*) * (j + 1));
 		result.call.args[j] = inner_ast->call.args[j];
@@ -400,7 +400,7 @@ AST parse_call(unsigned int *i, unsigned int c)
 	return result;
 }
 
-AST parse_return(unsigned int *i, unsigned int c)
+AST parse_return(uint *i, uint c)
 {
 	AST result;
 	
@@ -418,7 +418,7 @@ AST parse_return(unsigned int *i, unsigned int c)
 	return result;
 }
 
-AST parse_jumper(unsigned int *i, unsigned int c)
+AST parse_jumper(uint *i, uint c)
 {
 	AST result;
 	
@@ -454,7 +454,7 @@ AST parse_jumper(unsigned int *i, unsigned int c)
 	return result;
 }
 
-AST parse_label(unsigned int *i, unsigned int c)
+AST parse_label(uint *i, uint c)
 {
 	AST result;
 
@@ -472,12 +472,12 @@ AST parse_label(unsigned int *i, unsigned int c)
 }
 
 AST* ast;
-unsigned int ast_counter = 0;
+uint ast_counter = 0;
 char* scope;
-unsigned int scope_line = 0;
-unsigned int scope_column = 0;
+uint scope_line = 0;
+uint scope_column = 0;
 
-AST parse_function(unsigned int *i, unsigned int c)
+AST parse_function(uint *i, uint c)
 {
 	AST result;
 
@@ -509,7 +509,7 @@ AST parse_function(unsigned int *i, unsigned int c)
 	/* PARSE FUNCTION PARAMETERS */
 
 	result.function.args = NULL;
-	unsigned int argc = 0;
+	uint argc = 0;
 
 	while (tokens[*i].token_type != SYMBOL_RPAREN)
 	{
@@ -556,7 +556,7 @@ void parser_main()
 	scope = malloc(255);
 	strcpy(scope, "global");
 
-	for (unsigned int i = 0; i < tokens_counter; i++)
+	for (uint i = 0; i < tokens_counter; i++)
 	{
 		// If brace is closed then clean the scope.
 		if (strcmp(scope, "global") != 0 && tokens[i].token_type == SYMBOL_RBRACE)
@@ -567,8 +567,8 @@ void parser_main()
 
 		/* PARSE DATA TYPE */
 
-		const unsigned int tmp_line = tokens[i].line;
-		const unsigned int tmp_column = tokens[i].column;
+		const uint tmp_line = tokens[i].line;
+		const uint tmp_column = tokens[i].column;
 
 		if (tokens[i].token_group == DTYPE)
 		{
