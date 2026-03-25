@@ -8,6 +8,7 @@ typedef enum
 	NODE_BINARY,
 	NODE_IDENTIFIER,
 	NODE_UNARY,
+	NODE_NOT,
 	NODE_CALL,
 }
 _node_type;

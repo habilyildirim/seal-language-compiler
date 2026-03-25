@@ -87,6 +87,23 @@ EXPR* parse_primary(uint *i)
         return node;
     }
 
+    // Handle not expression
+    if (tok.token_type == LOPERATOR_NOT)
+    {
+        (*i)++;
+
+        EXPR* operand = parse_primary(i);
+
+        EXPR* node = malloc(sizeof(EXPR));
+        memset(node, 0, sizeof(EXPR));
+
+        node->type = NODE_NOT;
+        node->unary.op = strdup("!");
+        node->unary.value = operand;
+
+        return node;
+    }
+
     if (tok.token_group == _IDENTIFIER) 
     {
         node->type = NODE_IDENTIFIER;
@@ -149,6 +166,7 @@ EXPR* parse_primary(uint *i)
         free(node);
         return inner;
     }
+    
 
 	parser_error(source_files[0], tok.line, tok.column, WRONG_EXPRESSION);
 }
@@ -259,9 +277,7 @@ AST parse_macro(uint *i, uint c)
 	}
 
 	temp[strlen(temp)] = '\0';
-
 	result.macro.value = temp;
-
 	
 	return result;
 }
@@ -431,7 +447,7 @@ AST parse_jumper(uint *i, uint c)
 		parser_error(source_files[0], tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
 
 	(*i)++;
-
+	
 	result.jumper.condition = parse_expression(&(*i), 0);
 
 	if (tokens[*i].token_type != SYMBOL_RPAREN)

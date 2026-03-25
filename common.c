@@ -89,6 +89,8 @@ int isbinop (const char* value)
 		strcmp(value, "||") == 0 ||
 		strcmp(value, "==") == 0 ||
 		strcmp(value, "!=") == 0 ||
+		strcmp(value, "<=") == 0 ||
+		strcmp(value, ">=") == 0 ||
 		strcmp(value, "<") == 0 ||
 		strcmp(value, ">") == 0)
 		return 1;

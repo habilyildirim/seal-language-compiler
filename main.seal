@@ -3,12 +3,12 @@ INCLUDE "testio.lbnz"
 
 #integer32 main()
 {
-	integer32 c = 1111111111111111111111111111111111111111111111111111;
-	integer32 a = .1;
+	integer32 c = 123;
+	integer64 a = 1.;
 
-	:test		
-		a = a + 1;
-	jump (a != 10) test;
+	:test
+		a = a - 4;
+	jump (1 >= 1) test;
 
 	return a;
 }
