@@ -30,6 +30,7 @@ typedef enum
 	SYMBOL_BACKSLASH,    /* \ */
 	SYMBOL_HASH,         // #
 	SYMBOL_DOLAR,		 // $
+	END_INCFILE,         // @
 
 	SYMBOL_INVALID,
 
@@ -147,9 +148,9 @@ _token;
 extern _token* tokens;
 extern uint tokens_counter;
 
-extern _ar source_files;
+extern char* source_file;
 
-void lexer_main(const _ar sources_list);
+void lexer_main(char* sf_ref);
 void print_tokens(uint ex);
 
 #endif

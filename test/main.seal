@@ -1,0 +1,13 @@
+INCLUDE "/home/user01/projects/seal-language-compiler/test/test.sealmod"
+
+#integer32 main()
+{
+	integer32 c = 123;
+	integer64 a = 1.;
+
+	:test
+		a = a - 4;
+	jump (1 >= 1) test;
+
+	return a;
+}

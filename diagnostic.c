@@ -28,11 +28,9 @@ void print_lines(const char* source_file, const uint line)
 {
 	char* file = NULL;
 	uint filesize = 0;
-
 	file = open_buffer(source_file, &filesize);
 
 	uint c = 1;
-
 	for (uint i = 0; i != filesize; i++)
 	{
 		if (c == line)
@@ -77,6 +75,31 @@ void print_caret(uint column)
 		printf("~");
 
 	printf("^\n");
+}
+
+void prep_error(const char* source_file, const uint line, const uint column, const PREP_LAYER_ERROR_TYPE ERROR_TYPE)
+{
+	printf("prep-err~~> %s:%d:%d\n", source_file, line, column);
+
+	if (source_file != NULL || line != 0)
+	{
+		print_lines(source_file, line);
+		print_caret(column);	
+	}
+
+	switch (ERROR_TYPE)
+	{
+		case TMP_CNB_CREATED:
+			printf("| Temp file could not be created. Check permissions\n");
+			exit(1);
+		case INCFILE_NOT_EXISTS:
+			printf("| The included file not exists\n");
+			exit(1);
+		case END_SYMBOL:
+			printf("| Expected '@' at end of file. (Only included file)\n");
+			exit(1);
+		default:
+	}
 }
 
 void lexer_error(const char* source_file, const uint line, const uint column, const LEXER_LAYER_ERROR_TYPE ERROR_TYPE)
@@ -160,6 +183,9 @@ void parser_error(const char* source_file, const uint line, const uint column, c
 			exit(1);
 		case WRONG_EXPRESSION:
 			printf("| Incorrect expression.\n");
+			exit(1);
+		case WRONG_CHRREQ:
+			printf("| '@' is only needed in included files");
 			exit(1);
 		case UNEXPECTED:
 			printf("| Unexpected keyword\n");

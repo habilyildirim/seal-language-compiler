@@ -5,7 +5,7 @@ use warnings;
 
 my $CC = 'gcc';
 my $FLAGS = '-g -O0';
-my $SOURCES = 'main.c common.c diagnostic.c lexer.c parser.c semantic.c ir.c';
+my $SOURCES = 'main.c common.c preprocessor/preprocessor.c diagnostic.c lexer.c parser.c semantic.c ir.c';
 my $TARGET = 'bin/seal';
 
 sub change_test 

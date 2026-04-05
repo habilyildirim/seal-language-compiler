@@ -19,16 +19,15 @@
 
 */
 
-/* main.c Was written for testing purposes. Will be replaced later!! */
-
 #include "common.h"
+#include "preprocessor/preprocessor.h"
 #include "lexer.h"
 #include "parser.h"
 #include "semantic.h"
 #include "ir.h"
 #include "test.c"
 
-#define VERSION "Seal Version - Under"
+#define VERSION "Seal Version - Under\n"
 
 int main(int argc, char *argv[])
 {
@@ -44,51 +43,11 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	char out[255];
+	char* source_file = argv[1];
 
-	strncpy(out, "a.out", 5);
-	out[5] = '\0';
-
-	if (strcmp(argv[argc - 2], "-o") == 0 || strcmp(argv[argc - 2], "-output") == 0)
-	{
-		strncpy(out, argv[argc - 1], strlen(argv[argc - 1]));
-		out[strlen(argv[argc - 1])] = '\0';
-	}
-
-	_ar sources_list = NULL;
-	_arsize sources_list_size = 0;
-
-	/* control the extensions */
-	
-	int sources_i_counter = 0;
-
-	for (uint i = 1; i < (uint)argc; i++)
-	{
-		if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "-output") == 0)
-			break;
-
-		if (read_f(argv[i]) < 0)
-		{
-			fprintf(stderr, "Seal Error: \033[31m%s -> file cannot open\033[0m\n", argv[i]);
-			return -1;
-		}
-
-		if (strlen(argv[i]) < 6 || strcmp(argv[i] + strlen(argv[i]) - 5, ".seal") != 0)
-		{
-			fprintf(stderr, "Seal Error: \033[31m%s -> wrong input\033[0m\n", argv[i]);
-			return -1;
-		}
-
-		ar_at(&sources_list, argv[i], sources_i_counter, &sources_list_size);
-		sources_i_counter++;
-	}
-
-	lexer_main(sources_list);
-	//print_tokens(0);
-
-	parser_main();
-	//print_ast(0);
-
+	pp_main(&source_file, source_file);
+	lexer_main(source_file);		//print_tokens(1);
+	parser_main();					//print_ast(0);
 	semantic_main();
 
 	return 0;

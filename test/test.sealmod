@@ -1,0 +1,5 @@
+#integer32 test()
+{
+	return 0;
+}
+@

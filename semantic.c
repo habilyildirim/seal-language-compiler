@@ -24,6 +24,8 @@
 #include "parser.h"
 #include "diagnostic.h"
 
+char* smntcdiagnostic_file;
+
 AST* var_buffer;
 uint var_counter = 0;
 
@@ -108,7 +110,7 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
         case NODE_INT_LITERAL:
             if (is_int(data_type) < 1)
             {
-           		semantic_error(source_files[0], ast_root.line,  ast_root.column, 
+           		semantic_error(smntcdiagnostic_file, ast_root.line,  ast_root.column,
            						ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
            						NULL, TYPE_ERROR);	
             }
@@ -129,7 +131,7 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
 				// Identifier type controls
 				if (strcmp(var_buffer[index].var.type, data_type) != 0)
 				{
-					semantic_error(source_files[0], ast_root.line,  ast_root.column, 
+					semantic_error(smntcdiagnostic_file, ast_root.line,  ast_root.column, 
 									ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
 									e->identifier, TYPE_ERROR);
 				}
@@ -137,13 +139,13 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
 				break;
 			}
 
-			semantic_error(source_files[0], ast_root.line, ast_root.column, 
+			semantic_error(smntcdiagnostic_file, ast_root.line, ast_root.column, 
 							ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
 							e->identifier, UNDEFINED);
         case NODE_BINARY:
         	if (is_int(data_type) < 1)
         	{
-           		semantic_error(source_files[0], ast_root.line,  ast_root.column, 
+           		semantic_error(smntcdiagnostic_file, ast_root.line,  ast_root.column, 
            						ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
            						NULL, TYPE_ERROR);
         	}
@@ -154,7 +156,7 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
         case NODE_UNARY:
         	if (is_int(data_type) < 1)
         	{
-        		semantic_error(source_files[0], ast_root.line,  ast_root.column, 
+        		semantic_error(smntcdiagnostic_file, ast_root.line,  ast_root.column, 
         						ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
         						NULL, TYPE_ERROR);
         	}
@@ -164,7 +166,7 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
 		case NODE_CALL:
 			if (strcmp(ast_root.scope, "global") == 0)
 			{
-				semantic_error(source_files[0], ast_root.line, ast_root.column,
+				semantic_error(smntcdiagnostic_file, ast_root.line, ast_root.column,
 								ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
 								ast_root.label.name, WITHOUT_FUNCTION);
 			}
@@ -179,7 +181,7 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
             	// Args type control
             	if (function_buffer[index].function.argc != e->call.argc)
             	{
-            		semantic_error(source_files[0], ast_root.line, ast_root.column,
+            		semantic_error(smntcdiagnostic_file, ast_root.line, ast_root.column,
             						ast_root.scope, ast_root.scpline, ast_root.scpcolumn, 
             						NULL, ARGC_MISSMATCH);
             	}
@@ -203,7 +205,7 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
 
             	if (strcmp(function_buffer[index].function.type, data_type) != 0)
             	{
-            		semantic_error(source_files[0], ast_root.line,  ast_root.column,
+            		semantic_error(smntcdiagnostic_file, ast_root.line,  ast_root.column,
             						ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
             						e->identifier, TYPE_ERROR);
             	}
@@ -211,7 +213,7 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
             	break;
             }
 
-			semantic_error(source_files[0], ast_root.line, ast_root.column,
+			semantic_error(smntcdiagnostic_file, ast_root.line, ast_root.column,
 							ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
 							e->identifier, UNDEFINED);
         default:
@@ -224,23 +226,39 @@ void semantic_main()
 	function_buffer = malloc(sizeof(AST) * 2);
 	label_buffer = malloc(sizeof(AST) * 2);
 
+	smntcdiagnostic_file = source_file;
+	
 	for (uint i = 0; i < ast_counter; i++)
 	{
 		int index = 0;
 
 		switch (ast[i].type)
 		{
+			/*
+				'INCLUDE' is for diagnostic only here.
+				
+				The semantic check for 'INCLUDE' is 
+				handled at the preprocessor layer
+			*/
+			case INCLUDE:
+				smntcdiagnostic_file = ast[i].include.lib;
+				break;
+			case NODE_ENDOFLIB: 
+				smntcdiagnostic_file = source_file;
+				break;
+
+
 			case LABEL:
 				if (strcmp(ast[i].scope, "global") == 0)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
 									ast[i].label.name, WITHOUT_FUNCTION);
 				}
 
 				if (definiton_control("label", ast[i]) > -1)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
 									ast[i].label.name, REDEFINITION);
 				}
@@ -252,7 +270,7 @@ void semantic_main()
 			case JUMPER:
 				if (strcmp(ast[i].scope, "global") == 0)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column,
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column,
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
 									ast[i].label.name, WITHOUT_FUNCTION);
 				}
@@ -273,7 +291,7 @@ void semantic_main()
 
 					if(!(c < ast_counter) || strcmp(ast[c].scope, ast[i].scope) != 0)
 					{
-						semantic_error(source_files[0], ast[i].line, ast[i].column,
+						semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column,
 										ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
 										ast[i].label.name, UNDEFINED);
 					}
@@ -284,7 +302,7 @@ void semantic_main()
 			case VAR:
 				if (definiton_control("var", ast[i]) > -1)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
 									ast[i].var.name, REDEFINITION);
 				}
@@ -299,7 +317,7 @@ void semantic_main()
 			case FUNCTION:
 				if (definiton_control("function", ast[i]) > -1)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
 									ast[i].function.name, REDEFINITION);
 				}
@@ -311,7 +329,7 @@ void semantic_main()
 			case RETURN:
 				if (strcmp(ast[i].scope, "global") == 0)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
 									ast[i].label.name, WITHOUT_FUNCTION);
 				}
@@ -329,7 +347,7 @@ void semantic_main()
 			case PARSE_ASSIGNMENT:
 				if (strcmp(ast[i].scope, "global") == 0)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
 									ast[i].label.name, WITHOUT_FUNCTION);
 				}
@@ -346,7 +364,7 @@ void semantic_main()
 
 				if (index < 0)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn, 
 									ast[i].assignment.name, UNDEFINED);
 				}
@@ -363,7 +381,7 @@ void semantic_main()
 			case CALL:
 				if (strcmp(ast[i].scope, "global") == 0)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
 									ast[i].label.name, WITHOUT_FUNCTION);
 				}
@@ -374,14 +392,14 @@ void semantic_main()
 
 				if (index < 0)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column, 
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column, 
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn, 
 									ast[i].call.callee, UNDEFINED);
 				}
 
 				if (function_buffer[index].function.argc != ast[i].call.argc)
 				{
-					semantic_error(source_files[0], ast[i].line, ast[i].column,
+					semantic_error(smntcdiagnostic_file, ast[i].line, ast[i].column,
 									ast[i].scope, ast[i].scpline, ast[i].scpcolumn, 
 									NULL, ARGC_MISSMATCH);
 				}

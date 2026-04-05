@@ -1,5 +1,9 @@
-INCLUDE "test.lbnz"
-INCLUDE "testio.lbnz"
+INCLUDE "/home/user01/projects/seal-language-compiler/test/test.sealmod"
+#integer32 test()
+{
+	return 0;
+}
+@
 
 #integer32 main()
 {

@@ -24,6 +24,7 @@ typedef enum
 	LABEL,
 	VAR,
 	UVAR,
+	NODE_ENDOFLIB,
 	PARSE_ASSIGNMENT,
 }
 _AST_TYPE;

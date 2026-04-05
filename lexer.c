@@ -49,9 +49,10 @@ const _symbol symbol_table[] =
 	{'\\', SYMBOL_BACKSLASH},
 	{':',  KEYWORD_LABEL},
 	{'$',  SYMBOL_DOLAR},
+	{'@',  END_INCFILE}
 };
-	
-#define SYMBOL_TABLE_LENGTH 20
+
+#define SYMBOL_TABLE_LENGTH 21
 
 const _loperator logical_operator_table[] =
 {
@@ -183,7 +184,7 @@ _token_type query_keyword(const char *lexeme)
 void emit_token(const _token_type tt, _token_group tg, const char* value, const uint tokens_counter, const uint line_counter, uint column_counter)
 {
 	if (strlen(value) > 255)
-		lexer_error(source_files[0], line_counter, column_counter, IDENTIFIER_OVERFLOW);
+		lexer_error(source_file, line_counter, column_counter, IDENTIFIER_OVERFLOW);
 
 	void *tmp_tokensr = realloc(tokens, sizeof(_token) * (tokens_counter + 1));
 
@@ -228,7 +229,7 @@ _buffer_mod;
 
 /* ======================================== LEXER MACHINE ======================================== */
 
-_ar source_files;
+char* source_file;
 
 char* buffer = NULL;
 uint buffersize = 0;
@@ -317,7 +318,7 @@ void scan_symbol(_token_type *ro, _token_type *lo, const uint i)
 		char symbol[2] = {buffer[i], '\0'};
 
 		if (query_symbol(buffer[i]) == SYMBOL_INVALID)
-			lexer_error(source_files[0], line_counter, column_counter, INVALID_CHAR);
+			lexer_error(source_file, line_counter, column_counter, INVALID_CHAR);
 
 		emit_token(query_symbol(buffer[i]), SYMBOL, symbol, tokens_counter, line_counter, column_counter);
 		tokens_counter++;
@@ -450,7 +451,7 @@ void read_string_literal(uint *i, const uint is_charliteral)
 					break;
 				case '0':
 				default:
-					lexer_error(source_files[0], line_counter, column_counter, INVALID_ESCAPE);
+					lexer_error(source_file, line_counter, column_counter, INVALID_ESCAPE);
 			}
 
 			escape_tmp[1] = '\0';
@@ -503,7 +504,7 @@ void read_integer_literal(uint *i)
 		}
 
 		if (isalpha(buffer[*i]) && !isxdigit(buffer[*i]))
-			lexer_error(source_files[0], line_counter, column_counter, IS_NOT_HEX);
+			lexer_error(source_file, line_counter, column_counter, IS_NOT_HEX);
 
 		emit_token(INTEGER_LITERAL, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
 		return;
@@ -520,7 +521,7 @@ void read_integer_literal(uint *i)
 		}
 
 		if (isalpha(buffer[*i]) || (!_isbinary(buffer[*i]) && isdigit(buffer[*i])))
-			lexer_error(source_files[0], line_counter, column_counter, IS_NOT_BIN);
+			lexer_error(source_file, line_counter, column_counter, IS_NOT_BIN);
 
 		emit_token(INTEGER_LITERAL, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
 		return;
@@ -536,27 +537,27 @@ void read_integer_literal(uint *i)
 			dot_counter = 0;
 
 		if (dot_counter > 1)
-			lexer_error(source_files[0], line_counter, column_counter, MULTIPLE_DOTS);
+			lexer_error(source_file, line_counter, column_counter, MULTIPLE_DOTS);
 
 		update_position(*i);
 		read_buffer(buffer, *i, READ_INTEGER_LITERAL);
 	}
 
 	if (isalpha(buffer[*i]) || strcmp(lexeme_buffer, ".") == 0)
-		lexer_error(source_files[0], line_counter, column_counter, IS_NOT_DECIMAL);
+		lexer_error(source_file, line_counter, column_counter, IS_NOT_DECIMAL);
 
 	emit_token(INTEGER_LITERAL, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
 	return;
 }
 
-void lexer_main(const _ar sources_list)
+void lexer_main(char* sf_ref)
 {
-	buffer = open_buffer(sources_list[0], &buffersize);
+	buffer = open_buffer(sf_ref, &buffersize);
 
 	lexeme_buffer = malloc(lexeme_buffer_size);
 	lexeme_buffer[0] = '\0';
 
-	source_files = sources_list;
+	source_file = sf_ref;
 	
 	for (uint i = 0; i < buffersize; i++)
 	{		
