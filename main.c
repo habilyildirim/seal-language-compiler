@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 
 	char* source_file = argv[1];
 
-	pp_main(&source_file, source_file);
+	pp_main(&source_file);
 	lexer_main(source_file);		//print_tokens(1);
 	parser_main();					//print_ast(0);
 	semantic_main();

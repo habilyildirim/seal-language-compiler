@@ -3,6 +3,6 @@
 
 #include "../common.h"
 
-void pp_main(char* *converted, const char* sf);
+void pp_main(char* *converted);
 
 #endif

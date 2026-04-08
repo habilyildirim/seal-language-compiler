@@ -1,135 +1,155 @@
+/*
+
+	Seal Compiler - Preprocessor
+
+	Copyright (C) 2026 Habil Yıldırım
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+*/
+
+
+
+
+
+
+/* 
+
+	
+	!!This is debug file. Will be fixed and cleared later!! */
+
 #include "preprocessor.h"
 #include "../diagnostic.h"
 #include <time.h>
 
-const char* diagnostic_ref;
+char* top;
+char* bottom;
 
-char tmp_file[512];
-FILE* tmp;
+char* middle;
+uint middle_size = 0;
 
-char* file = {0};
-uint file_size = 0;
-
-char* prep_buffer = NULL;
-uint prep_buffer_size = 0;
-
-uint prep_line = 1;
-uint prep_column = 0;
-
-void include_handler(const char* file_ref)
+char* include_handler(char* rf, uint rf_counter, uint i)
 {
-	uint ifile_size;
-	char* inc_file = open_buffer(file_ref, &ifile_size);
-
-	if (inc_file == NULL)
-	{	
-		prep_error(diagnostic_ref, prep_line,
-			prep_column, INCFILE_NOT_EXISTS);
-	}
-
-	fputc('\n', tmp);
+	char* for_top;
 	uint c = 0;
 
-	for (;c + 1 < ifile_size; c++)
-		fputc(inc_file[c], tmp);
-
-	if (inc_file[c - 1] != '@')
-		prep_error(file_ref, 0, 0, END_SYMBOL);
-}
-
-uint include_analyzer(uint *i)
-{
-	(*i)++;
-
-	for (;file[*i] != '\"'; (*i)++)
-	{
-		fputc(file[*i], tmp);
-		if (file[*i] == ' ' || file[*i] == '\n')
-			continue;
-
-		return 0;	
-	}
-	fputc(file[*i], tmp);
-
-	(*i)++;
-	for (;file[*i] != '\"'; (*i)++)
-	{
-		if ((*i) + 1 > file_size)
-			return 0;
-
-		fputc(file[*i], tmp);
-		prep_buffer[prep_buffer_size] = file[*i];
-		prep_buffer[prep_buffer_size + 1] = '\0';
-		prep_buffer_size++;
-	}
-
-	fputc(file[*i], tmp);
-	include_handler(prep_buffer);
-}
-
-void prep_updatepos(char c)
-{
-	if (c == '\n')
-	{
-		prep_line++;
-		return;
-	}
-
-	prep_column++;
-}
-
-void prep_analyzer(const char* sf)
-{
-	diagnostic_ref = sf;
-	file = open_buffer(sf, &file_size);
-	prep_buffer = malloc(512);
+	char* for_middle;
+	uint d = 0;
 	
-	for (uint i = 0; i < file_size; i++)
+	i++;
+	for(;rf[i] != '"'; i++)
 	{
-		fputc(file[i], tmp);
-		prep_updatepos(file[i]);
-
-		if (file[i] == ' ' || file[i] == '\n')
+		if (i > rf_counter)
+			return NULL;
+		
+		if (rf[i] == ' ')
 		{
-			clear_buffer(prep_buffer, &prep_buffer_size);
+			for_top[c] = rf[i];
+			c++;
 			continue;
 		}
 
-		if (isalpha(file[i]))
+		return NULL;
+	}
+	for_top[c] = rf[i];
+	c++;
+
+	i++;
+	for(;rf[i] != '"'; i++)
+	{
+		if (i > rf_counter)
+			return NULL;
+
+		for_top[c] = rf[i];
+		c++;
+
+		for_middle[d] = rf[i];
+		d++;
+	}
+	for_top[c] = rf[i];
+	for_top[c + 1] = '\0';
+	for_middle[d] = '\0';
+
+	middle = open_buffer(for_middle, &middle_size);
+	return for_top;
+}
+
+void sync_top(char* *top, char* synced, uint *i)
+{
+	(*i)++;
+	uint c = 0;
+	for (;synced[c] != '\0'; c++)
+	{
+		(*top)[*i] = synced[c];
+		(*i)++;
+	}
+	(*top)[*i] = '\n';
+	(*top)[*i + 1] = '\0';
+}
+
+void get_bottom(char* rf, uint start, uint stop)
+{
+	uint l = 0;
+
+	for (uint c = start + 1; c != stop; c++)
+	{
+		bottom[l] = rf[c];
+		l++;
+	}
+	bottom[l] = '\0';
+}
+
+void pp_main(char* *converted)
+{
+	uint rf_counter = 0;
+	char* root_file = open_buffer(*converted, &rf_counter);
+
+	char* prep_buffer;
+	uint pb_size = 0;
+
+	top = malloc(512);
+	middle = malloc(512);
+	bottom = malloc(512);
+	prep_buffer = malloc(512);
+
+	for (uint i = 0; i < rf_counter; i++)
+	{
+		top[i] = root_file[i];
+		
+		if (root_file[i] == ' ' || root_file[i] == '\n')
 		{
-			prep_buffer[prep_buffer_size] = file[i];
-			prep_buffer[prep_buffer_size + 1] = '\0';
-			prep_buffer_size++;
+			clear_buffer(prep_buffer, &pb_size);
+			continue;
 		}
+
+		prep_buffer[pb_size] = root_file[i];
+		prep_buffer[pb_size + 1] = '\0';
+		pb_size++;
 
 		if (strcmp(prep_buffer, "INCLUDE") == 0)
-		{
-			clear_buffer(prep_buffer, &prep_buffer_size);
-
-			if (!include_analyzer(&i))
+		{	
+			char* result = include_handler(root_file, rf_counter, i);
+			if (result == NULL)
 				return;
+
+			sync_top(&top, result, &i);
+			get_bottom(root_file, i, rf_counter);
+
+			printf("%s", top);
+			printf("%s", middle);
+			printf("%s", bottom);
+			exit(0);
 		}
 	}
-}
-
-void write_tmp(char* *converted)
-{
-	srand(time(NULL));
-	uint tmpcode = rand();
-
-	sprintf(tmp_file, "%d", tmpcode);	
-	strcat(tmp_file, "sealpreptmp.seal");
-	tmp = fopen(tmp_file, "w");
-
-	if (tmp == NULL)
-		prep_error(NULL, 0, 0, TMP_CNB_CREATED);
-
-	(*converted) = tmp_file;
-}
-
-void pp_main(char* *converted, const char* sf)
-{
-	write_tmp(&(*converted));
-	prep_analyzer(sf);
-	fclose(tmp);
 }
