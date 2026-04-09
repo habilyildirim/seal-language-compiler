@@ -1,4 +1,4 @@
-INCLUDE "/home/ha/seal-language-compiler/test/test.sealmod"
+INCLUDE "/home/us01/x/seal-language-compiler/test/test.sealmod"
 
 #integer32 main()
 {

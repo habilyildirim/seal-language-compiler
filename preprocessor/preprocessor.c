@@ -19,25 +19,19 @@
 
 */
 
-
-
-
-
-
-/* 
-
-	
-	!!This is debug file. Will be fixed and cleared later!! */
-
 #include "preprocessor.h"
 #include "../diagnostic.h"
 #include <time.h>
 
 char* top;
 char* bottom;
-
 char* middle;
-uint middle_size = 0;
+
+uint middle_size = 128;
+
+uint middlebuffer_size = 128;
+uint topbuffer_size = 128;
+uint bottombuffer_size = 128;
 
 char* include_handler(char* rf, uint rf_counter, uint i)
 {
@@ -76,6 +70,12 @@ char* include_handler(char* rf, uint rf_counter, uint i)
 
 		for_middle[d] = rf[i];
 		d++;
+
+		if (d > middle_size)
+		{
+			middlebuffer_size*=2;
+			middle = realloc(middle, middlebuffer_size);
+		}
 	}
 	for_top[c] = rf[i];
 	for_top[c + 1] = '\0';
@@ -91,6 +91,12 @@ void sync_top(char* *top, char* synced, uint *i)
 	uint c = 0;
 	for (;synced[c] != '\0'; c++)
 	{
+		if (*i > topbuffer_size)
+		{
+			topbuffer_size*=2;
+			top = realloc(top, topbuffer_size);	
+		}
+
 		(*top)[*i] = synced[c];
 		(*i)++;
 	}
@@ -104,6 +110,12 @@ void get_bottom(char* rf, uint start, uint stop)
 
 	for (uint c = start + 1; c != stop; c++)
 	{
+		if (l > bottombuffer_size)
+		{
+			bottombuffer_size*=2;
+			bottom = realloc(top, bottombuffer_size);	
+		}
+
 		bottom[l] = rf[c];
 		l++;
 	}
@@ -117,16 +129,23 @@ void pp_main(char* *converted)
 
 	char* prep_buffer;
 	uint pb_size = 0;
+	
+	top = malloc(topbuffer_size);
+	middle = malloc(middlebuffer_size);
+	bottom = malloc(bottombuffer_size);
 
-	top = malloc(512);
-	middle = malloc(512);
-	bottom = malloc(512);
-	prep_buffer = malloc(512);
+	prep_buffer = malloc(128);
 
 	for (uint i = 0; i < rf_counter; i++)
 	{
 		top[i] = root_file[i];
-		
+
+		if (i > topbuffer_size)
+		{
+			topbuffer_size*=2;
+			top = realloc(top, topbuffer_size);	
+		}
+
 		if (root_file[i] == ' ' || root_file[i] == '\n')
 		{
 			clear_buffer(prep_buffer, &pb_size);
