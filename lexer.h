@@ -140,6 +140,7 @@ typedef struct
 			  // LEXEME_BUFFER_LEN
 	char value[256];
 
+	char* file;
 	uint line;
 	uint column;
 }
@@ -148,9 +149,9 @@ _token;
 extern _token* tokens;
 extern uint tokens_counter;
 
-extern char* source_file;
+extern char* diagnostic_srcfile;
 
-void lexer_main(char* sf_ref);
+void lexer_main(char* sourcefile_buffer, uint sf_counter, char* sourcefile_path);
 void print_tokens(uint ex);
 
 #endif

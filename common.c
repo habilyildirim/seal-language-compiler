@@ -43,14 +43,10 @@ char* open_buffer(const char* source, uint *buffersize)
 	FILE* buffer_source;
 
 	if(!(buffer_source = fopen(source, "rb")))
-	{
-		fprintf(stderr, "fopen error");
 		return NULL;
-	}
 
 	if(fseek(buffer_source, 0, SEEK_END) != 0)
 	{
-		fprintf(stderr, "fseek error");
 		fclose(buffer_source);
 		return NULL;
 	}

@@ -21,14 +21,20 @@
 
 #include "common.h"
 #include "diagnostic.h"
+#include "preprocessor/preprocessor.h"
 
 uint tab_counter = 0;
 
-void print_lines(const char* source_file, const uint line)
+uint print_lines(const char* diag, uint line)
 {
-	char* file = NULL;
-	uint filesize = 0;
-	file = open_buffer(source_file, &filesize);
+	char* file = strdup(root_file);
+	uint filesize = rf_counter;
+
+	if (diag != NULL)
+	{
+		file = strdup(diag);
+		filesize = strlen(diag);
+	}
 
 	uint c = 1;
 	for (uint i = 0; i != filesize; i++)
@@ -39,24 +45,29 @@ void print_lines(const char* source_file, const uint line)
 				tab_counter++;
 		}
 
+		if (diag != NULL && c == line - 1)
+		{
+			for (;file[i] != '\n'; i++)
+				printf("%c", file[i]);
+			
+			return 0;
+		}
+
 		if (c == line - 1 || c == line)
 		{
 			printf("\t");
-
+			
 			for (;file[i] != '\n'; i++)
 				printf("%c", file[i]);
 
-			printf("	Line -> ");
-
-			if (c == line - 1)
-				printf("%d\n", line - 1);
-			else
-				printf("%d\n", line);
+			printf("\n");
 		}
 
 		if (file[i] == '\n')
 			c++;
 	}
+
+	return 0;
 }
 
 void print_caret(uint column)
@@ -84,19 +95,17 @@ void prep_error(const char* source_file, const uint line, const uint column, con
 	if (source_file != NULL || line != 0)
 	{
 		print_lines(source_file, line);
-		print_caret(column);	
+		print_caret(column);
 	}
 
 	switch (ERROR_TYPE)
 	{
-		case TMP_CNB_CREATED:
-			printf("| Temp file could not be created. Check permissions\n");
-			exit(1);
-		case INCFILE_NOT_EXISTS:
-			printf("| The included file not exists\n");
-			exit(1);
 		case END_SYMBOL:
-			printf("| Expected '@' at end of file. (Only included file)\n");
+			// for diagnostic line control
+			printf("| Expected '@' at end of file. (Only included files)\n");
+			exit(1);
+		case END_SYMBOL_WRONG:
+			printf("| The '@' symbol is placed only at the end of included files.\n");
 			exit(1);
 		default:
 	}
@@ -104,8 +113,11 @@ void prep_error(const char* source_file, const uint line, const uint column, con
 
 void lexer_error(const char* source_file, const uint line, const uint column, const LEXER_LAYER_ERROR_TYPE ERROR_TYPE)
 {
-	printf("lexer-err~~> %s:%d:%d\n\n", source_file, line, column);
-	print_lines(source_file, line);
+	printf("lexer-error~>");
+	print_lines(diagnostic_mark, line);
+	printf(":%d\n", column);
+
+	print_lines(NULL, line);
 	print_caret(column);
 
 	switch (ERROR_TYPE)
@@ -139,8 +151,11 @@ void lexer_error(const char* source_file, const uint line, const uint column, co
 
 void parser_error(const char* source_file, const uint line, const uint column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE)
 {
-	printf("parser-err~~> %s:%d:%d\n\n", source_file, line, column);
-	print_lines(source_file, line);
+	printf("parser-error~>");
+	print_lines(diagnostic_mark, line);
+	printf(":%d\n", column);
+
+	print_lines(NULL, line);
 	print_caret(column);
 
 	switch (ERROR_TYPE)
@@ -199,15 +214,16 @@ void parser_error(const char* source_file, const uint line, const uint column, c
 void semantic_error(const char* source_file, const uint line, const uint column, const char* scope, const uint scpline,
 												const uint scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
 {
-	printf("semantic-err~~> %s:%d:%d\n", source_file, line, column);
-	printf("         ^~in~~> %s:%d:%d\n", scope, scpline, scpcolumn);
+	printf("semantic-error->");
+	print_lines(diagnostic_mark, line);
+	printf(":%d\n", column);
 
 	if (argument != NULL)
 		printf("         ^~~~~~> %s\n\n", argument);
 	else
-		printf("\n");	
+		printf("\n");
 
-	print_lines(source_file, line);
+	print_lines(NULL, line);
 	print_caret(column);
 
 	switch (ERROR_TYPE)
@@ -232,6 +248,9 @@ void semantic_error(const char* source_file, const uint line, const uint column,
 			exit(1);
 		case WITHOUT_FUNCTION:
 			printf("| State without function");
+			exit(1);
+		case FILE_NOT_OPEN:
+			printf("| File not exists or permission error");
 			exit(1);
 		default:
 			printf("| Unexpected error\n");

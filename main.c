@@ -43,11 +43,11 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	char* source_file = argv[1];
+	char* sourcefile_path = argv[1];
 
-	pp_main(&source_file);
-	lexer_main(source_file);		//print_tokens(1);
-	parser_main();					//print_ast(0);
+	pp_main(&sourcefile_path);
+	lexer_main(root_file, rf_counter, sourcefile_path);		//print_tokens(1);
+	parser_main();										//print_ast(0);
 	semantic_main();
 
 	return 0;

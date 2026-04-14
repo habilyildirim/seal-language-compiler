@@ -1,6 +1,6 @@
 /*
 
-	Seal Compiler - Preprocessor
+	Seal Compiler - Preprocessor Engine
 
 	Copyright (C) 2026 Habil Yıldırım
 
@@ -13,7 +13,7 @@
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 	GNU General Public License for more details.
-
+	
 	You should have received a copy of the GNU General Public License
 	along with this program. If not, see <https://www.gnu.org/licenses/>.
 
@@ -22,153 +22,357 @@
 #include "preprocessor.h"
 #include "../diagnostic.h"
 #include <time.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdint.h>
+
+/*
+	top holds chars from the start of 
+	the root file up to the include point
+
+	middle holds chars from the include 
+	point to the end of the included file
+
+	bottom: holds chars from the end of the 
+	included file to the end of the root file
+*/
 
 char* top;
-char* bottom;
 char* middle;
+char* bottom;
 
 uint middle_size = 128;
 
-uint middlebuffer_size = 128;
 uint topbuffer_size = 128;
+uint middlebuffer_size = 128;
 uint bottombuffer_size = 128;
+
+char* root_file;
+uint rf_counter = 0;
 
 char* include_handler(char* rf, uint rf_counter, uint i)
 {
-	char* for_top;
-	uint c = 0;
+    char* for_top = malloc(128);
+    uint c = 0;
 
-	char* for_middle;
-	uint d = 0;
-	
-	i++;
-	for(;rf[i] != '"'; i++)
-	{
-		if (i > rf_counter)
-			return NULL;
-		
-		if (rf[i] == ' ')
-		{
-			for_top[c] = rf[i];
-			c++;
-			continue;
-		}
+    char* for_middle = malloc(middlebuffer_size);
+    uint d = 0;
 
-		return NULL;
-	}
-	for_top[c] = rf[i];
+    i++;
+    for (;i < rf_counter && rf[i] != '"'; i++)
+    {
+        if (rf[i] == ' ')
+        {
+            if ((c + 1) % 128 == 0) 
+            	for_top = realloc(for_top, (c + 1) * 2);
+
+            for_top[c] = rf[i];
+            c++;
+            continue;
+        }
+
+        return NULL;
+    }
+
+    for_top[c] = rf[i];
 	c++;
 
-	i++;
-	for(;rf[i] != '"'; i++)
-	{
-		if (i > rf_counter)
-			return NULL;
+    i++;
+    for (;i < rf_counter && rf[i] != '"'; i++)
+    {
+        if ((c + 1) % 128 == 0)
+        {
+        	for_top = realloc(for_top, (c + 1) * 2);
+        	for_middle = realloc(for_middle, (c + 1) * 2);
+        }
 
-		for_top[c] = rf[i];
+        for_top[c] = rf[i];
 		c++;
 
-		for_middle[d] = rf[i];
-		d++;
+        if (d + 1 >= middlebuffer_size)
+        {
+            middlebuffer_size *= 2;
+            char* tmp = realloc(for_middle, middlebuffer_size);
+            for_middle = tmp;
+        }
 
-		if (d > middle_size)
-		{
-			middlebuffer_size*=2;
-			middle = realloc(middle, middlebuffer_size);
-		}
-	}
-	for_top[c] = rf[i];
-	for_top[c + 1] = '\0';
+        for_middle[d] = rf[i];
+        d++;
+    }
+    
+    for_top[c] = rf[i];
+    c++;
+    for_top[c] = '\0';
 	for_middle[d] = '\0';
 
-	middle = open_buffer(for_middle, &middle_size);
-	return for_top;
+    middle = open_buffer(for_middle, &middle_size);
+
+	if (middle == NULL)
+    	return NULL;
+
+	if (middle[strlen(middle) - 2] != '@')
+		prep_error(for_middle, 0, 0, END_SYMBOL);
+    
+    return for_top;
 }
 
-void sync_top(char* *top, char* synced, uint *i)
+void sync_top(char* synced, uint *i)
 {
-	(*i)++;
-	uint c = 0;
-	for (;synced[c] != '\0'; c++)
-	{
-		if (*i > topbuffer_size)
-		{
-			topbuffer_size*=2;
-			top = realloc(top, topbuffer_size);	
-		}
+	/*
+		add remaining chars to top 
+		buffer after detected "INCLUDE" 
+	*/
+    (*i)++;
 
-		(*top)[*i] = synced[c];
-		(*i)++;
-	}
-	(*top)[*i] = '\n';
-	(*top)[*i + 1] = '\0';
+    for (uint c = 0; synced[c] != '\0'; c++)
+    {
+        if (*i + 1 >= topbuffer_size)
+        {
+            topbuffer_size *= 2;
+            char* tmp = realloc(top, topbuffer_size);
+            top = tmp;
+        }
+
+        top[*i] = synced[c];
+        (*i)++;
+    }
+
+    if (*i + 2 >= topbuffer_size)
+    {
+        topbuffer_size *= 2;
+        top = realloc(top, topbuffer_size);
+    }
+
+    top[*i] = '\n';
+    top[*i + 1] = '\0';
 }
 
 void get_bottom(char* rf, uint start, uint stop)
 {
-	uint l = 0;
+    uint l = 0;
 
-	for (uint c = start + 1; c != stop; c++)
-	{
-		if (l > bottombuffer_size)
-		{
-			bottombuffer_size*=2;
-			bottom = realloc(top, bottombuffer_size);	
-		}
+    for (uint c = start + 1; c < stop; c++)
+    {
+        if (l + 1 >= bottombuffer_size)
+        {
+            bottombuffer_size *= 2;
+            char* tmp = realloc(bottom, bottombuffer_size);
+            bottom = tmp;
+        }
 
-		bottom[l] = rf[c];
-		l++;
-	}
-	bottom[l] = '\0';
+        bottom[l] = rf[c];
+        l++;
+    }
+
+    bottom[l] = '\0';
 }
 
-void pp_main(char* *converted)
+void clear_posstrg()
 {
-	uint rf_counter = 0;
-	char* root_file = open_buffer(*converted, &rf_counter);
+    clear_buffer(middle, &middlebuffer_size);
+    clear_buffer(bottom, &bottombuffer_size);
 
-	char* prep_buffer;
+    middlebuffer_size = 128;
+    bottombuffer_size = 128;
+
+    middle = malloc(middlebuffer_size);
+    bottom = malloc(bottombuffer_size);
+}
+
+
+uint8_t delimiter_key = 0;
+uint8_t commentline_key = 0;
+uint8_t blockcomment_key = 0;
+
+void pass_scan(char chr, char* str)
+{
+	if ( (commentline_key == 0 && delimiter_key == 0) && chr == '"')
+	{
+		delimiter_key = 1;
+		return;
+	}
+	if (delimiter_key == 1 && chr == '"')
+		delimiter_key = 0;
+
+	if ( (delimiter_key == 0 && commentline_key == 0) && chr == '~')
+	{
+		commentline_key = 1;
+		return;
+	}
+	if (commentline_key == 1 && chr == '\n')
+		commentline_key = 0;
+
+	if ((delimiter_key == 0 && commentline_key == 0) && strcmp(str, "/~") == 0)
+	{
+		if (blockcomment_key == 0)
+		{
+			blockcomment_key = 1;
+			return;	
+		}
+	}
+	if (blockcomment_key == 1 && strcmp(str, "~/") == 0)
+		commentline_key = 0;
+}
+
+void analyzer(char* converted)
+{
+	root_file = open_buffer(converted, &rf_counter);
+
+	char* prep_buffer = malloc(128);
 	uint pb_size = 0;
-	
+
 	top = malloc(topbuffer_size);
 	middle = malloc(middlebuffer_size);
 	bottom = malloc(bottombuffer_size);
 
-	prep_buffer = malloc(128);
-
 	for (uint i = 0; i < rf_counter; i++)
 	{
-		top[i] = root_file[i];
+	    if (i + 1 >= topbuffer_size)
+	    {
+	        topbuffer_size *= 2;
+	        char* tmp = realloc(top, topbuffer_size);
+	        top = tmp;
+	    }
+	    top[i] = root_file[i];
 
-		if (i > topbuffer_size)
-		{
-			topbuffer_size*=2;
-			top = realloc(top, topbuffer_size);	
-		}
-
-		if (root_file[i] == ' ' || root_file[i] == '\n')
-		{
-			clear_buffer(prep_buffer, &pb_size);
+		pass_scan(root_file[i], prep_buffer);
+		if (delimiter_key == 1 || commentline_key == 1)
 			continue;
+
+	    if (root_file[i] == ' ' || root_file[i] == '\n')
+	    {
+	        pb_size = 0;
+	        prep_buffer[0] = '\0';
+	        continue;
+	    }
+
+	    if (pb_size + 1 >= 128)
+	        continue;
+
+	    prep_buffer[pb_size] = root_file[i];
+	    pb_size++;
+	    prep_buffer[pb_size] = '\0';
+
+	    if (strcmp(prep_buffer, "INCLUDE") == 0)
+	    {
+	        char* result = include_handler(root_file, rf_counter, i);
+
+	        if (result == NULL)
+	        	return;
+
+	        sync_top(result, &i);
+	        get_bottom(root_file, i, rf_counter);
+
+	        char* tmp_root = strdup(top);
+	        size_t new_size = strlen(tmp_root) + strlen(middle) + strlen(bottom) + 1;
+
+	        char* resized = realloc(tmp_root, new_size);
+	        tmp_root = resized;
+
+	        strcat(tmp_root, middle);
+	        strcat(tmp_root, bottom);
+
+	        root_file = tmp_root;
+	        rf_counter = strlen(root_file);
+
+	        clear_posstrg();
+	        pb_size = 0;
+	    }
+	}
+}
+
+typedef struct
+{
+	char* file_name;
+	uint line;
+}
+dpfile_layer;
+
+char* diagnostic_mark;
+void diagnostic_marker(char* rf_path)
+{
+	uint dpb_size = 128;
+	uint dpb_counter = 0;
+	char* dp_buffer = malloc(dpb_size * sizeof(char));
+
+	uint layer_size = 128;
+	uint layer_point = 0;
+	dpfile_layer* layer = malloc(layer_size * sizeof(dpfile_layer));
+
+	layer[layer_point].file_name = rf_path;
+	layer[layer_point].line = 1;
+	diagnostic_mark = malloc(1);
+	diagnostic_mark[0] = '\0';
+
+	for (uint i = 0; root_file[i] != '\0'; i++)
+	{
+	    if (dpb_counter + 1 >= dpb_size)
+	    {
+	        dpb_size *= 2;
+	        char* tmp = realloc(dp_buffer, dpb_size);	        
+	        dp_buffer = tmp;
+	    }
+
+	    if (layer_point + 1 >= layer_size) 
+	    {
+	        layer_size *= 2;
+	        layer = realloc(layer, layer_size * sizeof(dpfile_layer));
+	    }
+
+		if (root_file[i] == '@')
+		{
+			if (layer_point == 0)
+				prep_error(rf_path, layer[layer_point].line, 0, END_SYMBOL_WRONG);
+
+			layer_point--;
 		}
 
-		prep_buffer[pb_size] = root_file[i];
-		prep_buffer[pb_size + 1] = '\0';
-		pb_size++;
+		if (root_file[i] == '\n')
+		{
+			char* dm_tmpline = NULL;
 
-		if (strcmp(prep_buffer, "INCLUDE") == 0)
-		{	
-			char* result = include_handler(root_file, rf_counter, i);
+			while (*layer[layer_point].file_name == ' ' || *layer[layer_point].file_name == '\n')
+				layer[layer_point].file_name++;
+
+			asprintf(&dm_tmpline, "%s:%d\n", layer[layer_point].file_name, layer[layer_point].line); 
+			diagnostic_mark = realloc(diagnostic_mark, strlen(diagnostic_mark) + strlen(dm_tmpline) + 1); 
+			strcat(diagnostic_mark, dm_tmpline);
+
+			layer[layer_point].line++;
+		}
+
+		pass_scan(root_file[i], dp_buffer);
+		if (delimiter_key == 1 || commentline_key == 1)
+			continue;
+
+	    if (root_file[i] == ' ' || root_file[i] == '\n')
+	    {
+	        dpb_counter = 0;
+	        dp_buffer[0] = '\0';
+	        continue;
+	    }
+
+	    dp_buffer[dpb_counter] = root_file[i];
+	    dpb_counter++;
+	    dp_buffer[dpb_counter] = '\0';
+
+	    if (strcmp(dp_buffer, "INCLUDE") == 0)
+	    {
+	    	char* result = include_handler(root_file, rf_counter, i);
 			if (result == NULL)
 				return;
 
-			sync_top(&top, result, &i);
-			get_bottom(root_file, i, rf_counter);
-
-			printf("%s", top);
-			printf("%s", middle);
-			printf("%s", bottom);
-			exit(0);
-		}
+	    	layer_point++;
+	    	layer[layer_point].file_name = result;
+	    	layer[layer_point].line = 1;
+	    }
 	}
+}
+
+void pp_main(char* *converted)
+{
+	analyzer(*converted);
+	diagnostic_marker(*converted);
 }
