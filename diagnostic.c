@@ -35,7 +35,7 @@ uint print_lines(const char* diag, uint line)
 		file = strdup(diag);
 		filesize = strlen(diag);
 	}
-
+	
 	uint c = 1;
 	for (uint i = 0; i != filesize; i++)
 	{
@@ -91,13 +91,7 @@ void print_caret(uint column)
 void prep_error(const char* source_file, const uint line, const uint column, const PREP_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("prep-err~~> %s:%d:%d\n", source_file, line, column);
-
-	if (source_file != NULL || line != 0)
-	{
-		print_lines(source_file, line);
-		print_caret(column);
-	}
-
+	printf("\n");
 	switch (ERROR_TYPE)
 	{
 		case END_SYMBOL:

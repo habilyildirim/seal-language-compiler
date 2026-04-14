@@ -324,7 +324,11 @@ void diagnostic_marker(char* rf_path)
 		if (root_file[i] == '@')
 		{
 			if (layer_point == 0)
-				prep_error(rf_path, layer[layer_point].line, 0, END_SYMBOL_WRONG);
+			{
+				printf("%d", layer[layer_point].line);
+				prep_error(rf_path, layer[layer_point].line, dpb_counter, END_SYMBOL_WRONG);
+			}
+				
 
 			layer_point--;
 		}
