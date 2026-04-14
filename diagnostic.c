@@ -53,8 +53,17 @@ uint print_lines(const char* diag, uint line)
 			return 0;
 		}
 
-		if (c == line - 1 || c == line)
+		if (line == 1) 
 		{
+		    printf("\t");
+		    for (uint i = 0; file[i] != '\n' && file[i] != '\0'; i++)
+		        printf("%c", file[i]);
+		
+		    return 0;
+		}
+		
+		if (c == line - 1 || c == line)
+		{			
 			printf("\t");
 			
 			for (;file[i] != '\n'; i++)
@@ -112,6 +121,9 @@ void lexer_error(const char* source_file, const uint line, const uint column, co
 	printf(":%d\n", column);
 
 	print_lines(NULL, line);
+	if (line == 1)
+		printf("\n");
+
 	print_caret(column);
 
 	switch (ERROR_TYPE)
@@ -150,6 +162,9 @@ void parser_error(const char* source_file, const uint line, const uint column, c
 	printf(":%d\n", column);
 
 	print_lines(NULL, line);
+	if (line == 1)
+		printf("\n");
+		
 	print_caret(column);
 
 	switch (ERROR_TYPE)
@@ -218,6 +233,9 @@ void semantic_error(const char* source_file, const uint line, const uint column,
 		printf("\n");
 
 	print_lines(NULL, line);
+	if (line == 1)
+		printf("\n");
+
 	print_caret(column);
 
 	switch (ERROR_TYPE)
