@@ -4,7 +4,8 @@
 
 typedef enum
 {
-	END_SYMBOL_WRONG,	
+	FILE_NOT_EXISTS,
+	END_SYMBOL_WRONG,
 	END_SYMBOL,
 	NON_PREP	
 }
@@ -65,20 +66,14 @@ typedef enum
 }
 IR_LAYER_ERROR_TYPE;
 
-void prep_error(const char* source_file, const uint line, const uint column, 
-					const PREP_LAYER_ERROR_TYPE ERROR_TYPE);
+void prep_error(const char* source_file, const uint line,
+				const uint column, const PREP_LAYER_ERROR_TYPE ERROR_TYPE);
 
-void lexer_error(const char* source_file, const uint line, const uint column, 
-					const LEXER_LAYER_ERROR_TYPE ERROR_TYPE);
+void semantic_error(const char* source_file, const uint line, const uint column, const char* scope, const uint scpline,
+					const uint scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE);
 
-void parser_error(const char* source_file, const uint line, const uint column, 
-					const PARSER_LAYER_ERROR_TYPE ERROR_TYPE);
-
-void semantic_error(const char* source_file, const uint line, const uint column, const char* scope, 
-						const uint scpline, const uint scpcolumn, 
-						const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE);
-
-void ir_error(const char* source_file, const uint line, const uint column, 
-				const IR_LAYER_ERROR_TYPE ERROR_TYPE);
+void lexer_error(const uint line, const uint column, const LEXER_LAYER_ERROR_TYPE ERROR_TYPE);
+void parser_error(const uint line, const uint column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE);
+void ir_error(const uint line, const uint column, const IR_LAYER_ERROR_TYPE ERROR_TYPE);
 
 #endif

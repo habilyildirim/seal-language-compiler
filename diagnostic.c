@@ -103,6 +103,9 @@ void prep_error(const char* source_file, const uint line, const uint column, con
 	printf("\n");
 	switch (ERROR_TYPE)
 	{
+		case FILE_NOT_EXISTS:
+			printf("| File not exists or permission error.\n");
+			exit(0);
 		case END_SYMBOL:
 			// for diagnostic line control
 			printf("| Expected '@' at end of file. (Only included files)\n");
@@ -114,7 +117,7 @@ void prep_error(const char* source_file, const uint line, const uint column, con
 	}
 }
 
-void lexer_error(const char* source_file, const uint line, const uint column, const LEXER_LAYER_ERROR_TYPE ERROR_TYPE)
+void lexer_error(const uint line, const uint column, const LEXER_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("lexer-error~>");
 	print_lines(diagnostic_mark, line);
@@ -155,7 +158,7 @@ void lexer_error(const char* source_file, const uint line, const uint column, co
 	}
 }
 
-void parser_error(const char* source_file, const uint line, const uint column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE)
+void parser_error(const uint line, const uint column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("parser-error~>");
 	print_lines(diagnostic_mark, line);
@@ -221,11 +224,11 @@ void parser_error(const char* source_file, const uint line, const uint column, c
 }
 
 void semantic_error(const char* source_file, const uint line, const uint column, const char* scope, const uint scpline,
-												const uint scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
+					const uint scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("semantic-error->");
 	print_lines(diagnostic_mark, line);
-	printf(":%d\n", column);
+	printf(":%d:%s\n", column, scope);
 
 	if (argument != NULL)
 		printf("         ^~~~~~> %s\n\n", argument);
@@ -269,7 +272,6 @@ void semantic_error(const char* source_file, const uint line, const uint column,
 			exit(1);
 	}
 }
-
 /*
 void ir_error(const char* source_file, const uint line, const uint column, const IR_LAYER_ERROR_TYPE ERROR_TYPE)
 {

@@ -30,7 +30,7 @@
 void overflow_control(const uint c, PARSER_LAYER_ERROR_TYPE err)
 {
 	if (c >= tokens_counter)
-		parser_error(diagnostic_srcfile, tokens[c - 1].line, tokens[c - 1].column, err);
+		parser_error(tokens[c - 1].line, tokens[c - 1].column, err);
 }
 
 int get_precedence(_token t)
@@ -129,7 +129,7 @@ EXPR* parse_primary(uint *i)
         	}
 
         	if (tokens[*i].token_type != SYMBOL_RPAREN)
-        		parser_error(diagnostic_srcfile, tokens[*i - 1].line, tokens[*i - 1].column, WRONG_EXPRESSION);
+        		parser_error(tokens[*i - 1].line, tokens[*i - 1].column, WRONG_EXPRESSION);
 
         	(*i)++;
 
@@ -168,7 +168,7 @@ EXPR* parse_primary(uint *i)
     }
     
 
-	parser_error(diagnostic_srcfile, tok.line, tok.column, WRONG_EXPRESSION);
+	parser_error(tok.line, tok.column, WRONG_EXPRESSION);
 }
 
 EXPR* parse_expression(uint *i, int precedence)
@@ -235,7 +235,7 @@ AST parse_include(uint *i, uint c)
 	result.type = INCLUDE;
 
 	if (tokens[*i + 1].token_type != STRING_LITERAL)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_INCLUDE);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_INCLUDE);
 
 	result.include.lib = tokens[*i + 1].value;
 	(*i)++;
@@ -253,7 +253,7 @@ AST parse_macro(uint *i, uint c)
 	(*i)++;
 
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_MACRO);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_MACRO);
 
 	result.macro.name = tokens[*i].value;
 
@@ -295,7 +295,7 @@ AST parse_var(uint *i, uint is_unsigned, uint c)
 		(*i)++;
 
 		if (tokens[*i].token_group != DTYPE)
-			parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR);
+			parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR);
 
 		overflow_control(*i, MISSING_ARG);
 		char* us_type = malloc(strlen("unsigned ") + strlen(tokens[*i + 2].value) + 1);
@@ -306,7 +306,7 @@ AST parse_var(uint *i, uint is_unsigned, uint c)
 		(*i)++;
 
 		if (tokens[*i].token_group != _IDENTIFIER)
-			parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR);
+			parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR);
 
 		result.var.name = tokens[*i].value;
 		(*i)++;
@@ -319,14 +319,14 @@ AST parse_var(uint *i, uint is_unsigned, uint c)
 			overflow_control(*i, MISSING_SEMICOLON);
 
 			if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-				parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
+				parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 			return result;
 		}
 
 		result.var.value = NULL;
 		if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-			parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
+			parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 	
 		return result;
 	}
@@ -335,7 +335,7 @@ AST parse_var(uint *i, uint is_unsigned, uint c)
 	(*i)++;
 	
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_VAR);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_VAR);
 
 	result.var.name = tokens[*i].value;
 	(*i)++;
@@ -348,7 +348,7 @@ AST parse_var(uint *i, uint is_unsigned, uint c)
 		overflow_control(*i, MISSING_SEMICOLON);
 
 		if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-			parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
+			parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 		return result;
 	}
@@ -357,7 +357,7 @@ AST parse_var(uint *i, uint is_unsigned, uint c)
 
 	result.var.value = NULL;
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
+		parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -385,7 +385,7 @@ AST parse_assignment(uint *i, uint c)
 	overflow_control(*i, MISSING_SEMICOLON);
 	
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
+		parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -411,7 +411,7 @@ AST parse_call(uint *i, uint c)
 	}
 
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
+		parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -429,7 +429,7 @@ AST parse_return(uint *i, uint c)
 	overflow_control(*i, MISSING_SEMICOLON);
 
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
+		parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -444,19 +444,19 @@ AST parse_jumper(uint *i, uint c)
 	(*i)++;
 	
 	if (tokens[*i].token_type != SYMBOL_LPAREN)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
 
 	(*i)++;
 	
 	result.jumper.condition = parse_expression(&(*i), 0);
 
 	if (tokens[*i].token_type != SYMBOL_RPAREN)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
 
 	(*i)++;
 	
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_JUMPER);
 
 	result.jumper.label = tokens[*i].value;
 
@@ -465,7 +465,7 @@ AST parse_jumper(uint *i, uint c)
 	overflow_control(*i, MISSING_SEMICOLON);
 
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
+		parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
 	return result;
 }
@@ -480,7 +480,7 @@ AST parse_label(uint *i, uint c)
 	(*i)++;
 	
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_LABEL);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_LABEL);
 	
 	result.label.name = tokens[*i].value;
 	
@@ -503,14 +503,14 @@ AST parse_function(uint *i, uint c)
 	(*i)++;
 
 	if (tokens[*i].token_group != DTYPE)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
 	result.function.type = tokens[*i].value;
 
 	(*i)++;
 
 	if (tokens[*i].token_type != IDENTIFIER)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
 	result.function.name = tokens[*i].value;
 	scope = strdup(tokens[*i].value);
@@ -518,7 +518,7 @@ AST parse_function(uint *i, uint c)
 	(*i)++;
 
 	if (tokens[*i].token_type != SYMBOL_LPAREN)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
 	(*i)++;
 
@@ -549,10 +549,10 @@ AST parse_function(uint *i, uint c)
 				continue;
 			}
 
-			parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
+			parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 		}
 
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 	}
 
 	result.function.argc = argc;
@@ -560,7 +560,7 @@ AST parse_function(uint *i, uint c)
 	(*i)++;
 
 	if (tokens[*i].token_type != SYMBOL_LBRACE)
-		parser_error(diagnostic_srcfile, tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
+		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
 	return result;
 }
@@ -667,7 +667,7 @@ void parser_main()
 				break;
 			case KEYWORD_FUNCTION:
 				if (strcmp(scope, "global") != 0)
-					parser_error(diagnostic_srcfile, tokens[i].line, tokens[i].column, UNEXPECTED_FUNCTION);
+					parser_error(tokens[i].line, tokens[i].column, UNEXPECTED_FUNCTION);
 
 				ast[ast_counter] = parse_function(&i, ast_counter);
 				ast[ast_counter].scope = strdup(scope);
@@ -709,12 +709,12 @@ void parser_main()
 				ast_counter++;
 				break;
 			default:
-				parser_error(diagnostic_srcfile, tokens[i].line, tokens[i].column, UNEXPECTED);
+				parser_error(tokens[i].line, tokens[i].column, UNEXPECTED);
 		}
 
 		ast = realloc(ast, sizeof(AST) * ast_counter * 2);
 	}
 
 	if (strcmp(scope, "global") != 0)
-		parser_error(diagnostic_srcfile, scope_line, scope_column, UNEXPECTED_FUNCTION);
+		parser_error(scope_line, scope_column, UNEXPECTED_FUNCTION);
 }

@@ -109,8 +109,8 @@ char* include_handler(char* rf, uint rf_counter, uint i)
 
     middle = open_buffer(for_middle, &middle_size);
 
-	if (middle == NULL)
-    	return NULL;
+	if (middle == NULL) 
+		return NULL;
 
 	if (middle[strlen(middle) - 2] != '@')
 		prep_error(for_middle, 0, 0, END_SYMBOL);
@@ -311,11 +311,11 @@ void diagnostic_marker(char* rf_path)
 	    if (dpb_counter + 1 >= dpb_size)
 	    {
 	        dpb_size *= 2;
-	        char* tmp = realloc(dp_buffer, dpb_size);	        
+	        char* tmp = realloc(dp_buffer, dpb_size);
 	        dp_buffer = tmp;
 	    }
 
-	    if (layer_point + 1 >= layer_size) 
+	    if (layer_point + 1 >= layer_size)
 	    {
 	        layer_size *= 2;
 	        layer = realloc(layer, layer_size * sizeof(dpfile_layer));
@@ -324,7 +324,7 @@ void diagnostic_marker(char* rf_path)
 		if (root_file[i] == '@')
 		{
 			if (layer_point == 0)
-			{
+	 		{
 				printf("%d", layer[layer_point].line);
 				prep_error(rf_path, layer[layer_point].line, dpb_counter, END_SYMBOL_WRONG);
 			}
@@ -361,6 +361,11 @@ void diagnostic_marker(char* rf_path)
 	    dp_buffer[dpb_counter] = root_file[i];
 	    dpb_counter++;
 	    dp_buffer[dpb_counter] = '\0';
+
+		if (strcmp(dp_buffer, "DEFINE") == 0)
+		{
+			// HERE
+		}
 
 	    if (strcmp(dp_buffer, "INCLUDE") == 0)
 	    {
