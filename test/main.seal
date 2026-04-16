@@ -1,18 +1,17 @@
 INCLUDE "/home/user01/seal-language-compiler/test/test.sealmod"
+INCLUDE "/home/user01/seal-language-compiler/test/x.sealmod"
 
 #integer32 main()
 {
 	integer32 c = 123;
 	integer64 a = 1.;
-	
+
 	:test
 		a = a - 4;
 	jump (1 >= 1) test;
 	
 	return a;
 }
-
-INCLUDE "/home/user01/seal-language-compiler/test/x.sealmod"
 
 #integer32 sd()
 {
