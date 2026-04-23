@@ -1,10 +1,5 @@
-#integer32 x(integer32 a, integer32 b)
+#i32 main()
 {
-    return a + b;
-}
-
-#integer32 main()
-{
-    integer32 a = 0;
-    return (a || x(1, 2)) && (x(3, 4) + 1 || 0);
+    i32 a = 1 + 1;
+    return a;
 }

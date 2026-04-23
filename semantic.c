@@ -87,10 +87,10 @@ int is_int(const char* dt)
 {
 	if (strcmp(dt, "binary") == 0 ||
 		strcmp(dt, "integer") == 0 ||
-		strcmp(dt, "integer8") == 0 ||
-		strcmp(dt, "integer16") == 0 ||
-		strcmp(dt, "integer32") == 0 ||
-		strcmp(dt, "integer64") == 0 ||
+		strcmp(dt, "i8") == 0 ||
+		strcmp(dt, "i16") == 0 ||
+		strcmp(dt, "i32") == 0 ||
+		strcmp(dt, "i64") == 0 ||
 		strcmp(dt, "double") == 0 ||
 		strcmp(dt, "float") == 0)
 		return 1;

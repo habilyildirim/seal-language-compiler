@@ -175,9 +175,45 @@ char* expr(EXPR* e)
 
 void ir_main()
 {	
+	// char* current_scope = NULL;
+
 	for (uint i = 0; i < ast_counter; i++)
 	{
-		if (ast[i].type == RETURN)
-			printf("ret %s\n", expr(ast[i]._return.value));	
+		switch (ast[i].type)
+		{
+			case FUNCTION:
+				tmp_counter = 0;
+				printf("func %s:%s", ast[i].function.name, ast[i].function.type);
+
+				for (uint l = 0; l < ast[i].function.argc; l++)
+				{
+					printf(" %s:%s", ast[i].function.args[l].name, 
+									 ast[i].function.args[l].type);
+					
+				}
+				printf("\n");
+				
+				break;
+			case RETURN:
+				printf("ret %s\n", expr(ast[i]._return.value));
+				break;
+			case UVAR:
+			case VAR:
+				printf("store %s %s\n", ast[i].var.name, expr(ast[i].var.value));
+				break;
+			default:
+		}
 	}
 }
+
+/*
+func x:
+tmp t0 load a
+tmp t1 load b
+tmp t2 add t0 t1
+ret t2
+
+----------------
+
+func x: store 
+*/
