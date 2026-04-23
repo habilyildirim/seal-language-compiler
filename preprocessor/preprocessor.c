@@ -364,11 +364,6 @@ void diagnostic_marker(char* rf_path)
 	    dpb_counter++;
 	    dp_buffer[dpb_counter] = '\0';
 
-		if (strcmp(dp_buffer, "DEFINE") == 0)
-		{
-			// HERE
-		}
-
 	    if (strcmp(dp_buffer, "INCLUDE") == 0)
 	    {
 	    	char* result = include_handler(root_file, rf_counter, i);

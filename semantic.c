@@ -184,7 +184,6 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
             						NULL, ARGC_MISSMATCH);
             	}
 
-				printf("%d", e->call.argc);
             	if (e->call.argc == 0)
             		break;
 
@@ -312,6 +311,25 @@ void semantic_main()
 									ast[i].function.name, REDEFINITION);
 				}
 
+				for (uint l = 0; l < ast[i].function.argc; l++)
+				{
+					AST function_ref;
+					function_ref.scope = ast[i].scope;
+					function_ref.var.type = ast[i].function.args[l].type;
+					function_ref.var.name = ast[i].function.args[l].name;
+
+					if (definiton_control("var", function_ref) > -1)
+					{
+						semantic_error(diagnostic_srcfile, ast[i].line, ast[i].column, 
+										ast[i].scope, ast[i].scpline, ast[i].scpcolumn,
+										ast[i].var.name, REDEFINITION);
+					}
+
+					var_buffer[var_counter] = function_ref;
+					var_counter++;
+					var_buffer = realloc(var_buffer, sizeof(AST) * var_counter * 2);
+				}
+
 				function_buffer[function_counter] = ast[i];
 				function_counter++;
 				function_buffer = realloc(function_buffer, sizeof(AST) * function_counter * 2);
@@ -365,7 +383,7 @@ void semantic_main()
 				*/
 
 				const char* assignment_type = var_buffer[index].var.type;
-				
+
 				expr_control(ast[i], assignment_type, ast[i].assignment.value);
 				break;
 			case CALL:

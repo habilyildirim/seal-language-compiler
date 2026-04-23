@@ -8,7 +8,7 @@ INCLUDE "/home/user01/seal-language-compiler/test/x.sealmod"
 
 	:test
 		a = a - 4;
-	jump (1 >= 1) test;
+	jump (1 >= a) test;
 	
 	return a;
 }
