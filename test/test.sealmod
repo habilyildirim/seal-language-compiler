@@ -1,4 +1,4 @@
-#integer32 test()
+#i32 test()
 {
 	return 0;
 }

@@ -115,6 +115,13 @@ void expr_control(AST ast_root, const char* data_type, EXPR* e)
 
             break;
         case NODE_IDENTIFIER:
+        	if (strcmp(ast_root.scope, "global") == 0)
+        	{
+        		semantic_error(diagnostic_srcfile, ast_root.line, ast_root.column,
+        						ast_root.scope, ast_root.scpline, ast_root.scpcolumn,
+        						ast_root.label.name, WITHOUT_FUNCTION);
+        	}
+
         	ref.scope = ast_root.scope;
         	ref.var.name = e->identifier;
 

@@ -20,11 +20,19 @@
 */
 
 #include "parser.h"
+#include "ir.h"
 #include "common.h"
 
 uint tmp_counter = 0;
 uint irlabel_counter = 0;
 
+typedef struct 
+{
+	char* arg;
+}
+argsary;
+
+FILE* ir_source;
 char* expr(EXPR* e)
 {
     if (!e) 
@@ -35,14 +43,14 @@ char* expr(EXPR* e)
         case NODE_INT_LITERAL:
         	char* result_literal = NULL;
         	asprintf(&result_literal, "t%d", tmp_counter);
-        	printf("tmp t%d const i32 %s\n", tmp_counter, e->literal);
+        	fprintf(ir_source, "tmp t%d const i32 %s\n", tmp_counter, e->literal);
 
         	tmp_counter++;
             return result_literal;
         case NODE_IDENTIFIER:
         	char* result_identifier = NULL;
         	asprintf(&result_identifier, "t%d", tmp_counter);
-        	printf("tmp t%d load i32 %s\n", tmp_counter, e->identifier);
+        	fprintf(ir_source, "tmp t%d load i32 %s\n", tmp_counter, e->identifier);
 
         	tmp_counter++;
             return result_identifier;
@@ -53,18 +61,18 @@ char* expr(EXPR* e)
         		char* left = expr(e->binary.left);
         		if (left == NULL)
         			asprintf(&left, "t%d", tmp_counter - 1);
-        		printf("jmp if_false %s L%d_false\n", left, irlabel_counter);
+        		fprintf(ir_source, "jmp if_false %s L%d_false\n", left, irlabel_counter);
         		
         		char* right = expr(e->binary.right);
         		if (right == NULL)
         			asprintf(&right, "t%d", tmp_counter - 1);
-        		printf("jmp if_false %s L%d_false\n", right, irlabel_counter);
+        		fprintf(ir_source, "jmp if_false %s L%d_false\n", right, irlabel_counter);
 
-        		printf("tmp t%d const i32 1\n", tmp_counter);
-        		printf("jmp L%d_end\n", irlabel_counter);
-        		printf("label L%d_false\n", irlabel_counter);
-        		printf("tmp t%d const i32 0\n", tmp_counter);
-        		printf("label L%d_end\n", irlabel_counter);
+        		fprintf(ir_source, "tmp t%d const i32 1\n", tmp_counter);
+        		fprintf(ir_source, "jmp L%d_end\n", irlabel_counter);
+        		fprintf(ir_source, "label L%d_false\n", irlabel_counter);
+        		fprintf(ir_source, "tmp t%d const i32 0\n", tmp_counter);
+        		fprintf(ir_source, "label L%d_end\n", irlabel_counter);
         		tmp_counter++;
         		irlabel_counter++;
 
@@ -77,18 +85,18 @@ char* expr(EXPR* e)
         		char* left = expr(e->binary.left);
         		if (left == NULL)
         			asprintf(&left, "t%d", tmp_counter - 1);
-        		printf("jmp if_true %s L%d_true\n", left, irlabel_counter);
-        		
+        		fprintf(ir_source, "jmp if_true %s L%d_true\n", left, irlabel_counter);
+
         		char* right = expr(e->binary.right);
         		if (right == NULL)
         			asprintf(&right, "t%d", tmp_counter - 1);
-        		printf("jmp if_true %s L%d_true\n", right, irlabel_counter);
+        		fprintf(ir_source, "jmp if_true %s L%d_true\n", right, irlabel_counter);
 
-        		printf("tmp t%d const i32 0\n", tmp_counter);
-        		printf("jmp L%d_end\n", irlabel_counter);
-        		printf("label L%d_true\n", irlabel_counter);
-        		printf("tmp t%d const 1\n", tmp_counter);
-        		printf("label L%d_end\n", irlabel_counter);
+        		fprintf(ir_source, "tmp t%d const i32 0\n", tmp_counter);
+        		fprintf(ir_source, "jmp L%d_end\n", irlabel_counter);
+        		fprintf(ir_source, "label L%d_true\n", irlabel_counter);
+        		fprintf(ir_source, "tmp t%d const 1\n", tmp_counter);
+        		fprintf(ir_source, "label L%d_end\n", irlabel_counter);
         		tmp_counter++;
         		irlabel_counter++;
 
@@ -118,9 +126,9 @@ char* expr(EXPR* e)
 			if (strcmp(e->binary.op, ">=") == 0) oper = "cmp_ge";
 			if (strcmp(e->binary.op, "<=") == 0) oper = "cmp_le";
 
-			printf("tmp t%d %s", tmp_counter, oper);
-			printf(" %s", left);
-			printf(" %s\n", right);
+			fprintf(ir_source, "tmp t%d %s", tmp_counter, oper);
+			fprintf(ir_source, " %s", left);
+			fprintf(ir_source, " %s\n", right);
 			tmp_counter++;
 
 			asprintf(&result_binary, "t%d", tmp_counter - 1);
@@ -129,7 +137,7 @@ char* expr(EXPR* e)
 			char* unary_value = expr(e->unary.value);
             char* result_unary = NULL;
             asprintf(&result_unary, "t%d", tmp_counter);
-            printf("tmp t%d neg %s\n", tmp_counter, unary_value);
+            fprintf(ir_source, "tmp t%d neg %s\n", tmp_counter, unary_value);
 
             tmp_counter++;
             return result_unary;
@@ -137,31 +145,25 @@ char* expr(EXPR* e)
         	char* not_value = expr(e->unary.value);
             char* result_not = NULL;
             asprintf(&result_not, "t%d", tmp_counter);
-            printf("tmp t%d not %s\n", tmp_counter, not_value);
+            fprintf(ir_source, "tmp t%d not %s\n", tmp_counter, not_value);
 
             tmp_counter++;
-            return result_unary;
+            return result_not;
 		case NODE_CALL:
 			char* result_call = NULL;
+			argsary* argsary_ref = malloc(sizeof(argsary_ref) * e->call.argc);
 
-			typedef struct 
-			{
-				char* arg;
-			}
-			argsary;
-			argsary* argsary_ref = malloc(sizeof(argsary_ref) + 1);
-			
             for (uint i = 0; i < e->call.argc; i++)
             {
             	argsary_ref[i].arg = expr(e->call.args[i]);
-            	argsary_ref = realloc(argsary_ref, sizeof(argsary_ref) + 1);
+            	argsary_ref = realloc(argsary_ref, sizeof(argsary) * (i + 1));
             }
-            
-            printf("tmp t%d call %s", tmp_counter, e->call.callee);
+
+            fprintf(ir_source, "tmp t%d call %s", tmp_counter, e->call.callee);
 
            	for (uint i = 0; i < e->call.argc; i++)
-            	printf(" %s", argsary_ref[i].arg);
-            printf("\n");
+            	fprintf(ir_source, " %s", argsary_ref[i].arg);
+            fprintf(ir_source, "\n");
 
 			asprintf(&result_call, "t%d", tmp_counter);
 			tmp_counter++;
@@ -173,47 +175,86 @@ char* expr(EXPR* e)
     return NULL;
 }
 
-void ir_main()
-{	
-	// char* current_scope = NULL;
+void ir_main(char* source)
+{
+	strcat(source, ".ir");
+	ir_source = fopen("test.sir", "wr");
+
+	uint global_key = 0;
 
 	for (uint i = 0; i < ast_counter; i++)
 	{
+		if (strcmp(ast[i].scope, "global") == 0)
+		{
+			if (global_key == 0 && ast[i].type != FUNCTION)
+			{
+				fprintf(ir_source, "global:\n");
+				global_key++;
+			}
+
+			switch (ast[i].type)
+			{
+				case UVAR:
+				case VAR:
+					fprintf(ir_source, "alloc %s %s\n", ast[i].var.name, ast[i].var.type);
+					fprintf(ir_source, "store %s %s\n", ast[i].var.name, expr(ast[i].var.value));
+				default:
+			}
+		}
+	}
+
+	for (uint i = 0; i < ast_counter; i++)
+	{
+		if (strcmp(ast[i].scope, "global") == 0 && ast[i].type != FUNCTION)
+			continue;
+
 		switch (ast[i].type)
 		{
 			case FUNCTION:
 				tmp_counter = 0;
-				printf("func %s:%s", ast[i].function.name, ast[i].function.type);
+				fprintf(ir_source, "func %s:%s", ast[i].function.name, ast[i].function.type);
 
 				for (uint l = 0; l < ast[i].function.argc; l++)
 				{
-					printf(" %s:%s", ast[i].function.args[l].name, 
+					fprintf(ir_source, " %s:%s", ast[i].function.args[l].name, 
 									 ast[i].function.args[l].type);
 					
 				}
-				printf("\n");
-				
+				fprintf(ir_source, "\n");
+
+				break;
+			case CALL:
+				argsary* call_arg = NULL;
+				call_arg = malloc(sizeof(call_arg) + 1);
+
+				for (uint l = 0; l < ast[i].call.argc; l++)
+				{
+					call_arg[l].arg = expr(ast[i].call.args[l]);
+					call_arg = realloc(call_arg, sizeof(call_arg) + 1);
+				}
+
+				fprintf(ir_source, "tmp t%d call %s", tmp_counter, ast[i].call.callee);
+				for (uint l = 0; l < ast[i].call.argc; l++)
+					fprintf(ir_source, " %s", call_arg[l].arg);
+				fprintf(ir_source, "\n");
+
 				break;
 			case RETURN:
-				printf("ret %s\n", expr(ast[i]._return.value));
+				fprintf(ir_source, "ret %s\n", expr(ast[i]._return.value));
 				break;
 			case UVAR:
 			case VAR:
-				printf("store %s %s\n", ast[i].var.name, expr(ast[i].var.value));
+				fprintf(ir_source, "alloc %s %s\n", ast[i].var.name, ast[i].var.type);
+				fprintf(ir_source, "store %s %s\n", ast[i].var.name, expr(ast[i].var.value));
+				break;
+			case JUMPER:
+				fprintf(ir_source, "jmp if_true %s %s\n", expr(ast[i].jumper.condition), ast[i].jumper.label);
+				break;
+			case LABEL:
+				fprintf(ir_source, "label %s\n", ast[i].label.name);
 				break;
 			default:
 		}
 	}
+	fclose(ir_source);
 }
-
-/*
-func x:
-tmp t0 load a
-tmp t1 load b
-tmp t2 add t0 t1
-ret t2
-
-----------------
-
-func x: store 
-*/

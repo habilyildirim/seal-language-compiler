@@ -1,4 +1,4 @@
-#integer32 gg()
+#i32 gg()
 {
 	~ This is comment line	
 }

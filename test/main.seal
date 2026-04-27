@@ -1,10 +1,10 @@
 INCLUDE "/home/user01/seal-language-compiler/test/test.sealmod"
 INCLUDE "/home/user01/seal-language-compiler/test/x.sealmod"
 
-#integer32 main()
+#i32 main()
 {
-	integer32 c = 123;
-	integer64 a = 1.;
+	i32 c = 123;
+	i32 a = 1.;
 
 	:test
 		a = a - 4;
@@ -13,8 +13,8 @@ INCLUDE "/home/user01/seal-language-compiler/test/x.sealmod"
 	return a;
 }
 
-#integer32 sd()
+#i32 sd()
 {
-	integer16 c = 12;
+	i16 c = 12;
 	return c;
 }
