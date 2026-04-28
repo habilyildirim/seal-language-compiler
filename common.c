@@ -1,4 +1,6 @@
 #include "common.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 int read_f(const char *fname)
 {
@@ -20,7 +22,7 @@ void ar_at(_ar *ary, char* data, int index, _arsize *arsize)
 	(*ary)[index] = data;
 }
 
-int _isalnum(const char c)
+bool _isalnum(const char c)
 {
 	/*
 		[a-zA-Z0-9], _
@@ -66,7 +68,7 @@ char* open_buffer(const char* source, uint *buffersize)
 	return buffer;
 }
 
-int _isbinary(char value)
+bool _isbinary(char value)
 {
 	if(value == '0' || value == '1')
 		return 1;
@@ -74,7 +76,7 @@ int _isbinary(char value)
 	return 0;
 }
 
-int isbinop (const char* value)
+bool isbinop (const char* value)
 {
 	if (strcmp(value, "+") == 0 || 
 		strcmp(value, "-") == 0 || 
@@ -94,7 +96,7 @@ int isbinop (const char* value)
 	return 0;
 }
 
-int is_integer(const char* c)
+bool is_integer(const char* c)
 {
 	for (uint i = 0; i < strlen(c); i++)
 	{

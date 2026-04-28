@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 
 	pp_main(&sourcefile_path);
 	lexer_main(root_file, rf_counter, sourcefile_path);		//print_tokens(1);
-	parser_main();										//print_ast(0);
+	parser_main();											//print_ast(0);
 	semantic_main();
 	ir_main(sourcefile_path);
 

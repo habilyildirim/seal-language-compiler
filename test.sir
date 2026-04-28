@@ -1,0 +1,17 @@
+func a:i64
+alloc a i32
+tmp t0 const i32 11
+store a t0
+alloc g i8
+tmp t1 const i32 5
+store g t1
+tmp t2 const i32 1
+ret t2
+func main:i32
+alloc a i32
+tmp t0 const i32 3
+store a t0
+alloc b i32
+tmp t1 const i32 66
+store b t1
+ret 0

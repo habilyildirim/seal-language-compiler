@@ -181,7 +181,6 @@ void ir_main(char* source)
 	ir_source = fopen("test.sir", "wr");
 
 	uint global_key = 0;
-
 	for (uint i = 0; i < ast_counter; i++)
 	{
 		if (strcmp(ast[i].scope, "global") == 0)
@@ -203,6 +202,7 @@ void ir_main(char* source)
 		}
 	}
 
+	bool return_key = 1;
 	for (uint i = 0; i < ast_counter; i++)
 	{
 		if (strcmp(ast[i].scope, "global") == 0 && ast[i].type != FUNCTION)
@@ -211,14 +211,16 @@ void ir_main(char* source)
 		switch (ast[i].type)
 		{
 			case FUNCTION:
+				if (!return_key)
+					fprintf(ir_source, "ret 0\n");
+
 				tmp_counter = 0;
 				fprintf(ir_source, "func %s:%s", ast[i].function.name, ast[i].function.type);
 
 				for (uint l = 0; l < ast[i].function.argc; l++)
 				{
 					fprintf(ir_source, " %s:%s", ast[i].function.args[l].name, 
-									 ast[i].function.args[l].type);
-					
+												 ast[i].function.args[l].type);
 				}
 				fprintf(ir_source, "\n");
 
@@ -255,6 +257,15 @@ void ir_main(char* source)
 				break;
 			default:
 		}
+
+		if (ast[i].type != RETURN)
+			return_key = 0;
+		else
+			return_key = 1;
 	}
+
+	if (!return_key)
+		fprintf(ir_source, "ret 0\n");
+
 	fclose(ir_source);
 }
