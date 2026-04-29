@@ -175,12 +175,11 @@ char* expr(EXPR* e)
     return NULL;
 }
 
-void ir_main(char* source)
+void ir_main()
 {
-	strcat(source, ".ir");
-	ir_source = fopen("test.sir", "wr");
+	ir_source = fopen("sealir.sir", "wr");
 
-	uint global_key = 0;
+	bool global_key = 0;
 	for (uint i = 0; i < ast_counter; i++)
 	{
 		if (strcmp(ast[i].scope, "global") == 0)
@@ -188,7 +187,7 @@ void ir_main(char* source)
 			if (global_key == 0 && ast[i].type != FUNCTION)
 			{
 				fprintf(ir_source, "global:\n");
-				global_key++;
+				global_key = 1;
 			}
 
 			switch (ast[i].type)

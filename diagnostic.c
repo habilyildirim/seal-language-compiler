@@ -132,16 +132,16 @@ void lexer_error(const uint line, const uint column, const LEXER_LAYER_ERROR_TYP
 	switch (ERROR_TYPE)
 	{
 		case INVALID_CHAR:
-			printf("| Invalid char\n");
+			printf("| Invalid char.\n");
 			exit(1);
 		case INVALID_ESCAPE:
-			printf("| Invalid escape\n");
+			printf("| Invalid escape.\n");
 			exit(1);
 		case IS_NOT_HEX:
-			printf("| This char is not hexadecimal\n");
+			printf("| This char is not hexadecimal.\n");
 			exit(1);
 		case IS_NOT_BIN:
-			printf("| This char is not binary\n");
+			printf("| This char is not binary.\n");
 			exit(1);
 		case IS_NOT_DECIMAL:
 			printf("| This char is not decimal(number)\n");
@@ -173,7 +173,7 @@ void parser_error(const uint line, const uint column, const PARSER_LAYER_ERROR_T
 	switch (ERROR_TYPE)
 	{
 		case MISSING_ARG:
-			printf("| Missing argument\n");
+			printf("| Missing argument.\n");
 			exit (1);
 		case UNEXPECTED_INCLUDE:
 			printf("| Syntax error; INCLUDE Useage ~> INCLUDE <STRING_LITERAL>\n");
@@ -185,7 +185,7 @@ void parser_error(const uint line, const uint column, const PARSER_LAYER_ERROR_T
 			printf("| Syntax error; FUNCTION Useage ~>\nff <DATA_TYPE> <FUNCTION_NAME>(<VAR_DEFINATION>, ...)\n{\n	...\n}\n");
 			exit(1);
 		case NESTED_FUNCTIONS:
-			printf("| Nested error; Functions shoulden not be use nested");
+			printf("| Nested error; Functions shoulden not be use nested.");
 			exit(1);
 		case UNEXPECTED_CALL:
 			printf("| Syntax error; CALL Useage ~> <FUNCTION_NAME>(<PARAMETER>, PARAMETER>....)");
@@ -212,7 +212,7 @@ void parser_error(const uint line, const uint column, const PARSER_LAYER_ERROR_T
 			printf("| Incorrect expression.\n");
 			exit(1);
 		case WRONG_CHRREQ:
-			printf("| '@' is only needed in included files");
+			printf("| '@' is only needed in included files.\n");
 			exit(1);
 		case UNEXPECTED:
 			printf("| Unexpected keyword\n");
@@ -250,25 +250,28 @@ void semantic_error(const char* source_file, const uint line, const uint column,
 			printf("| of undefined\n");
 			exit(1);
 		case GLOBAL_CANNOTRET:
-			printf("| Global cannot be return \n");
+			printf("| Global cannot be return.\n");
 			exit(1);
 		case CANNOT_RETNULLVAL:
-			printf("| Cannot be return to null value \n");
+			printf("| Cannot be return to null value.\n");
 			exit(1);
 		case TYPE_ERROR:
-			printf("| Invalid expression type \n");
+			printf("| Invalid expression type.\n");
 			exit(1);
 		case ARGC_MISSMATCH:
-			printf("| Argument counter miss match to function defination. \n");
+			printf("| Argument counter miss match to function defination.\n");
 			exit(1);
 		case WITHOUT_FUNCTION:
-			printf("| State without function");
+			printf("| State without function.\n");
 			exit(1);
 		case FILE_NOT_OPEN:
-			printf("| File not exists or permission error");
+			printf("| File not exists or permission error.\n");
+			exit(1);
+		case MAIN_FUNC_NOT_EXISTS:
+			printf("| Main point not exists.\n");
 			exit(1);
 		default:
-			printf("| Unexpected error\n");
+			printf("| Unexpected error.\n");
 			exit(1);
 	}
 }

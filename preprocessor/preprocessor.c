@@ -114,7 +114,9 @@ char* include_handler(char* rf, uint rf_counter, uint i)
 
 	if (middle[strlen(middle) - 2] != '@')
 		prep_error(for_middle, 0, 0, END_SYMBOL);
-    
+
+    free(for_top);
+	free(for_middle);
     return for_top;
 }
 
@@ -373,7 +375,7 @@ void diagnostic_marker(char* rf_path)
 	    	layer_point++;
 	    	layer[layer_point].file_name = result;
 	    	layer[layer_point].line = 1;
-	    }
+		}
 	}
 }
 

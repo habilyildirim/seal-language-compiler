@@ -185,7 +185,6 @@ void emit_token(const _token_type tt, _token_group tg, const char* value, const 
 {
 	if (strlen(value) > 255)
 		lexer_error(line_counter, column_counter, IDENTIFIER_OVERFLOW);
-
 	void *tmp_tokensr = realloc(tokens, sizeof(_token) * (tokens_counter + 1));
 
 	if (tmp_tokensr == NULL)
@@ -214,6 +213,7 @@ void emit_token(const _token_type tt, _token_group tg, const char* value, const 
 	tokens[tokens_counter].line = line_counter;
 	tokens[tokens_counter].column = column_counter;
 	tokens[tokens_counter].file = "test";
+	// free(tmp_tokensr);
 }
 
 typedef enum
@@ -340,6 +340,7 @@ void lexemebuffer_rcontrol()
         }
 
         lexeme_buffer = tmp;
+        free(tmp);
     }
 }
 
@@ -654,4 +655,5 @@ void lexer_main(char* sourcefile_buffer, uint sf_counter, char* sourcefile_path)
 
 		update_position(i);
 	}
+	free(lexeme_buffer);
 }

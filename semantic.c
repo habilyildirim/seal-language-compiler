@@ -229,7 +229,8 @@ void semantic_main()
 	var_buffer = malloc(sizeof(AST) * 2);
 	function_buffer = malloc(sizeof(AST) * 2);
 	label_buffer = malloc(sizeof(AST) * 2);
-	
+
+	bool main_key = 0;
 	for (uint i = 0; i < ast_counter; i++)
 	{
 		int index = 0;
@@ -318,6 +319,9 @@ void semantic_main()
 									ast[i].function.name, REDEFINITION);
 				}
 
+				if (strcmp(ast[i].function.name, "main") == 0)
+					main_key = 1;
+					
 				for (uint l = 0; l < ast[i].function.argc; l++)
 				{
 					AST function_ref;
@@ -432,5 +436,11 @@ void semantic_main()
 				}
 			default:
 		}
+	}
+
+	if (!main_key)
+	{
+		semantic_error(diagnostic_srcfile, 0, 0, 0, 0, 0, 
+						NULL, MAIN_FUNC_NOT_EXISTS);
 	}
 }
