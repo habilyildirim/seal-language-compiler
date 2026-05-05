@@ -10,6 +10,17 @@
 typedef char** _ar;
 typedef uint _arsize;
 
+typedef struct
+{
+	bool asm_flag;
+	bool obj;
+	bool llvm;
+	bool ir;
+}
+arg_flags;
+
+extern arg_flags arg_flagref;
+
 int read_f(const char *fname);
 void ar_at(_ar *ary, char* data, int index, _arsize *arsize);
 bool _isalnum(const char c);

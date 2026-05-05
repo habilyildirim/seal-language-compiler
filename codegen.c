@@ -19,10 +19,337 @@
 
 */
 
+#include "codegen.h"
 #include "ir.h"
 #include "common.h"
+#include "diagnostic.h"
 
-void codegen_main()
+FILE* llvm;
+
+void clear(char* out)
 {
+	if (out == NULL)
+	{
+		if (arg_flagref.asm_flag)
+		{
+			if (system("llc a.ll -filetype=asm -o a.s") != 0)
+				codegen_error(0, 0, LLVM_CANNOT_COMPILE);
+		}
+
+		if (!arg_flagref.obj)
+		{
+			#ifdef _WIN32
+				if (system("del a.obj") != 0)
+					printf("OBJ cannot be cleared. Check permisson\n");
+			#else
+				if (system("rm a.o") != 0)
+					printf("OBJ cannot be cleared. Check permisson\n");
+			#endif
+		}
+
+		if (!arg_flagref.llvm)
+		{
+			#ifdef _WIN32
+				if (system("del a.ll") != 0)
+					printf("IR cannot be cleared. Check permisson\n");
+			#else
+				if (system("rm a.ll") != 0)
+					printf("IR cannot be cleared. Check permisson\n");
+			#endif
+		}
+
+		if (!arg_flagref.ir)
+		{
+			#ifdef _WIN32
+				if (system("del sealir.sir") != 0)
+					printf("IR cannot be cleared. Check permisson\n");
+			#else
+				if (system("rm sealir.sir") != 0)
+					printf("IR cannot be cleared. Check permisson\n");
+			#endif
+		}
+
+		return;
+	}
+
+	if (arg_flagref.asm_flag)
+	{
+		char* command = NULL;
+		sprintf(command, "llc %s.ll -filetype=asm -o %s.s", out, out);
+
+		if (system(command) != 0)
+			codegen_error(0, 0, LLVM_CANNOT_COMPILE);
+	}
+
+	if (!arg_flagref.obj)
+	{
+		char* command = NULL;
+
+		#ifdef _WIN32
+			sprintf(command, "del %s.obj", out);
+		#else
+			sprintf(command, "rm %s.obj", out);
+		#endif
+
+		if (system(command) != 0)
+			printf("OBJ cannot be cleared. Check permisson\n");
+	}
+
+	if (!arg_flagref.llvm)
+	{
+		char* command = NULL;
+
+		#ifdef _WIN32
+			sprintf(command, "del %s.ll", out);
+		#else
+			sprintf(command, "rm %s.ll", out);
+		#endif
+
+		if (system(command) != 0)
+			printf("IR cannot be cleared. Check permisson\n");
+	}
+
+	if (!arg_flagref.ir)
+	{
+		#ifdef _WIN32
+			if (system("del sealir.sir") != 0)
+				printf("IR cannot be cleared. Check permisson\n");
+		#else
+			if (system("rm sealir.sir") != 0)
+				printf("IR cannot be cleared. Check permisson\n");
+		#endif
+	}
+}
+
+void generate_bin(char* out)
+{	
+	#ifdef _WIN32
+		if (out == NULL)
+		{
+	    	if (system("llc a.ll -filetype=obj -o a.obj") != 0)
+	        	codegen_error(0, 0, LLVM_CANNOT_COMPILE);
+	    	if (system("lld-link a.obj /OUT:a.exe") != 0)
+	        	codegen_error(0, 0, LLVM_CANNOT_LINK);
+
+			clear(out);
+	        return;
+	    }
+	#else
+		if (out == NULL)
+		{
+			if (system("llc a.ll -filetype=obj -o a.o") != 0)
+				codegen_error(0, 0, LLVM_CANNOT_COMPILE);
+			if (system("ld.lld a.o -o a") != 0)
+				codegen_error(0, 0, LLVM_CANNOT_LINK);
+
+			clear(out);
+			return;
+		}
+	#endif
+
+	#ifdef _WIN32
+		char* compile = NULL;
+		sprintf(compile, "llc %s.ll -filetype=obj -o %s.obj", out, out);
+	    char* link = NULL
+	    sprintf(compile, "lld-link %s.obj /OUT:%s.exe", out, out);
+
+	    if (system(compile) != 0)
+	        	codegen_error(0, 0, LLVM_CANNOT_COMPILE);
+	    if (system(link) != 0)
+	        	codegen_error(0, 0, LLVM_CANNOT_LINK);
+
+		clear(out);
+	#else
+		char* compile = NULL;
+		sprintf(compile, "llc %s.ll -filetype=obj -o %s.o", out, out);
+		char* link = NULL;
+		sprintf(link, "ld.lld %s.o -o %s", out, out);
+
+		if (system(compile) != 0)
+			codegen_error(0, 0, LLVM_CANNOT_COMPILE);
+		if (system(link) != 0)
+			codegen_error(0, 0, LLVM_CANNOT_LINK);
+
+		clear(out);
+	#endif
+}
+
+typedef struct
+{
+	uint order;
+	char* type;
+}
+type_order;
+
+const type_order _type_order[] =
+{
+	{0, "binary"},
+	{1, "i8"},
+	{2, "i16"},
+	{3, "i32"},
+	{4, "i64"}
+};
+#define TYPE_ORDER_SIZE 5
+
+int get_torder(char* type)
+{
+	for (uint i = 0; i != TYPE_ORDER_SIZE; i++)
+	{
+		if (strcmp(_type_order[i].type, type) == 0)
+			return _type_order[i].order;
+	}
+
+	// INVALID TYPE
+	return -1;
+}
+
+void parse_ir()
+{
+	bool scope = 0;
+	char* current_functype = NULL;
+	for (uint i = 0; i < ir_counter; i++)
+	{
+		switch (ir[i].type)
+		{
+			case TYPE_FUNC:
+				if (scope)
+					fprintf(llvm, "}");
+				else
+					scope = 1;
+
+				fprintf(llvm, "define %s @%s(", ir[i].func.type, 
+												ir[i].func.name);
+
+				// Handle args
+				for (uint c = 0; c < ir[i].func.argc; c++)
+				{
+					if (c != 0)
+						fprintf(llvm, " ");
+
+					fprintf(llvm, "%s %%%s", ir[i].func.args[c].type, 
+											 ir[i].func.args[c].name);
+
+					if (c != ir[i].func.argc)
+						fprintf(llvm, ",");
+				}
+				fprintf(llvm ,") {\nentry:\n");
+				current_functype = ir[i].func.type;
+
+				break;
+			case TYPE_TMP:
+				if (ir[i].tmp.op != OP_NOT)
+					fprintf(llvm, "%%%s = ", ir[i].tmp.name);
+
+				switch (ir[i].tmp.op)
+				{
+					case OP_NOT:
+						fprintf(llvm, "%%__notcast__ = icmp eq %s %%%s, 0\n", 
+							ir[i].tmp.type,
+							ir[i].tmp.left);
+						fprintf(llvm, "%%%s = zext i1 %%__notcast__ to %s\n", 
+							ir[i].tmp.name, 
+							ir[i].tmp.type);
+						break;	
+					case OP_CONST:
+						fprintf(llvm, "add %s %s, 0\n", ir[i].tmp.type, 
+							ir[i].tmp.left);
+						break;
+					case OP_LOAD:
+						fprintf(llvm, "load %s, %s* %%%s\n", ir[i].tmp.type,
+							ir[i].tmp.type, ir[i].tmp.left);
+						break;
+					default:
+				}
+				break;
+			case TYPE_ALLOCATE:
+				fprintf(llvm, "%%%s = alloca %s\n", ir[i].allocate.var_name, ir[i].allocate.type);
+				break;
+			case TYPE_STORE:
+				const int tmp_order = get_torder(ir[i - 1].tmp.type); 
+				const int storevar_order = get_torder(ir[i].store.type);
+
+				if (tmp_order == storevar_order)
+				{
+					fprintf(llvm, "store %s %%%s, %s* %%%s\n",
+						ir[i].store.type, ir[i].store.value,
+						ir[i].store.type,  ir[i].store.var_name);
+
+					break;
+				}
+
+				fprintf(llvm, "%%__storecast__ =");
+				if (storevar_order > tmp_order)
+					fprintf(llvm, " zext");
+				else
+					fprintf(llvm, " trunc");
+
+				fprintf(llvm, " %s %%%s to %s\n", 
+					ir[i - 1].tmp.type, 
+					ir[i - 1].tmp.name, 
+					ir[i].store.type);
+
+				fprintf(llvm, "store %s %%__storecast__, %s* %%%s\n",
+					ir[i].store.type, ir[i].store.type,  
+					ir[i].store.var_name);
+				
+				break;
+			case TYPE_RET:
+				const int ret_order = get_torder(ir[i].ret.type);
+				const int current_funcorder = get_torder(current_functype);
+
+				if (ret_order == current_funcorder)
+				{
+					fprintf(llvm, "ret %s %%%s\n", 
+						current_functype, 
+						ir[i].ret.value);
+
+					break;
+				}
+
+				fprintf(llvm, "%%___returncast___ =");
+				if (current_funcorder > ret_order)
+					fprintf(llvm, " zext");
+				else
+					fprintf(llvm, " trunc");
+
+				fprintf(llvm, " %s %%%s to %s\n", 
+					ir[i].ret.type,
+					ir[i].ret.value, 
+					current_functype);
+
+				fprintf(llvm, "ret %s %%___returncast___\n", current_functype);
+				break;
+			default:
+		}
+	}
+
+	if (scope == 1)
+		fprintf(llvm, "}\n\n");
+}
+
+void codegen_main(char* out)
+{
+	if (out == NULL)
+		llvm = fopen("a.ll", "wr");
+	else
+	{
+		char* llvmfile_name = NULL;
+		sprintf(llvmfile_name, "%s.ll", out);
+		llvm = fopen(llvmfile_name, "wr");
+	}
 	
+	parse_ir();
+
+	fprintf(llvm,
+	"define void @_start() {\n"
+	"entry:\n"
+		"\t%%r = call i32 @main()\n"
+		"\t%%r64 = sext i32 %%r to i64\n"
+		"\tcall void asm sideeffect \"syscall\", \"{rax},{rdi}\"(i64 60, i64 %%r64)\n"
+		"\tunreachable\n"
+	"}\n"
+	);
+
+	fclose(llvm);
+	generate_bin(out);
 }

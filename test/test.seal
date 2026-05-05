@@ -1,0 +1,7 @@
+#
+i32 main()
+{
+	i8 a = 0;
+	i8 b = a;
+	return b;
+}

@@ -67,6 +67,14 @@ typedef enum
 }
 IR_LAYER_ERROR_TYPE;
 
+typedef enum
+{
+	LLVM_CANNOT_COMPILE,
+	LLVM_CANNOT_LINK
+} 
+CODEGEN_LAYER_ERROR_TYPE;
+
+void cli_error(const char* error_out);
 void prep_error(const char* source_file, const uint line,
 				const uint column, const PREP_LAYER_ERROR_TYPE ERROR_TYPE);
 
@@ -76,5 +84,6 @@ void semantic_error(const char* source_file, const uint line, const uint column,
 void lexer_error(const uint line, const uint column, const LEXER_LAYER_ERROR_TYPE ERROR_TYPE);
 void parser_error(const uint line, const uint column, const PARSER_LAYER_ERROR_TYPE ERROR_TYPE);
 void ir_error(const uint line, const uint column, const IR_LAYER_ERROR_TYPE ERROR_TYPE);
+void codegen_error(const uint line, const uint column, const CODEGEN_LAYER_ERROR_TYPE ERROR_TYPE);
 
 #endif

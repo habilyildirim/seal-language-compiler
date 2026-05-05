@@ -142,6 +142,7 @@ typedef struct
 
 		struct
 		{
+			char* type;
 			char* name;
 			struct EXPR* value;
 		}

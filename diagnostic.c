@@ -23,6 +23,23 @@
 #include "diagnostic.h"
 #include "preprocessor/preprocessor.h"
 
+#define HELP_OUT "Useage: seal [options] [value]\n" \
+				 "Options:\n" \
+				 "--Save -s     Save to output file.\n" \
+				 "	Values:\n" \
+				 "	asm\n" \
+				 "	obj\n" \
+				 "	llvm\n" \
+				 "	ir\n" \
+				 "--Compile -c  Show the source file.\n" \
+				 "	Values: Source file name.\n" \
+				 "--Output -o   Show the output file name.\n" \
+				 "	Values: Output file name" \
+				 "Useage: seal [information].\n" \
+				 "Options:\n" \
+				 "--Help -h     Print this message and exit.\n" \
+				 "--Version -v  Print version and exit.\n"
+
 uint tab_counter = 0;
 
 uint print_lines(const char* diag, uint line)
@@ -95,6 +112,13 @@ void print_caret(uint column)
 		printf("~");
 
 	printf("^\n");
+}
+
+void cli_error(const char* error_out)
+{
+	printf("CLI error: %s \n", error_out);
+	printf(HELP_OUT);
+	exit(1);
 }
 
 void prep_error(const char* source_file, const uint line, const uint column, const PREP_LAYER_ERROR_TYPE ERROR_TYPE)
@@ -275,6 +299,31 @@ void semantic_error(const char* source_file, const uint line, const uint column,
 			exit(1);
 	}
 }
+
+void codegen_error(const uint line, const uint column, const CODEGEN_LAYER_ERROR_TYPE ERROR_TYPE)
+{
+	printf("codegen-error~>");
+	print_lines(diagnostic_mark, line);
+	printf(":%d\n", column);
+
+	print_lines(NULL, line);
+	if (line == 1)
+		printf("\n");
+		
+	print_caret(column);
+
+	switch (ERROR_TYPE)
+	{
+		case LLVM_CANNOT_COMPILE:
+			printf("LLVM cannot be compiled");
+			break;
+		case LLVM_CANNOT_LINK:
+			printf("LLVM cannot be linked");
+			break;
+		default:
+	}
+}
+
 /*
 void ir_error(const char* source_file, const uint line, const uint column, const IR_LAYER_ERROR_TYPE ERROR_TYPE)
 {

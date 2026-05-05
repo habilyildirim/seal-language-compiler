@@ -379,7 +379,8 @@ void semantic_main()
 				AST assgnmnt_ref;
 				assgnmnt_ref.var.name = ast[i].assignment.name;
 				assgnmnt_ref.scope = ast[i].scope;
-				index = definiton_control("var", assgnmnt_ref); 
+				index = definiton_control("var", assgnmnt_ref);
+				ast[i].assignment.type = var_buffer[index].var.type;
 
 				if (index < 0)
 				{
