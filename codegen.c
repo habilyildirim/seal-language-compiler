@@ -74,7 +74,7 @@ void clear(char* out)
 
 	if (arg_flagref.asm_flag)
 	{
-		char* command = NULL;
+		char* command = malloc(256);
 		sprintf(command, "llc %s.ll -filetype=asm -o %s.s", out, out);
 
 		if (system(command) != 0)
@@ -83,12 +83,12 @@ void clear(char* out)
 
 	if (!arg_flagref.obj)
 	{
-		char* command = NULL;
+		char* command = malloc(128);
 
 		#ifdef _WIN32
 			sprintf(command, "del %s.obj", out);
 		#else
-			sprintf(command, "rm %s.obj", out);
+			sprintf(command, "rm %s.o", out);
 		#endif
 
 		if (system(command) != 0)
@@ -97,7 +97,7 @@ void clear(char* out)
 
 	if (!arg_flagref.llvm)
 	{
-		char* command = NULL;
+		char* command = malloc(128);
 
 		#ifdef _WIN32
 			sprintf(command, "del %s.ll", out);
@@ -148,21 +148,21 @@ void generate_bin(char* out)
 	#endif
 
 	#ifdef _WIN32
-		char* compile = NULL;
+		char* compile = malloc(256);
 		sprintf(compile, "llc %s.ll -filetype=obj -o %s.obj", out, out);
-	    char* link = NULL
+	    char* link = malloc(256);
 	    sprintf(compile, "lld-link %s.obj /OUT:%s.exe", out, out);
 
 	    if (system(compile) != 0)
-	        	codegen_error(0, 0, LLVM_CANNOT_COMPILE);
+	    	codegen_error(0, 0, LLVM_CANNOT_COMPILE);
 	    if (system(link) != 0)
-	        	codegen_error(0, 0, LLVM_CANNOT_LINK);
+	    	codegen_error(0, 0, LLVM_CANNOT_LINK);
 
 		clear(out);
 	#else
-		char* compile = NULL;
+		char* compile = malloc(256);
 		sprintf(compile, "llc %s.ll -filetype=obj -o %s.o", out, out);
-		char* link = NULL;
+		char* link = malloc(256);
 		sprintf(link, "ld.lld %s.o -o %s", out, out);
 
 		if (system(compile) != 0)
@@ -333,11 +333,14 @@ void codegen_main(char* out)
 		llvm = fopen("a.ll", "wr");
 	else
 	{
-		char* llvmfile_name = NULL;
+		if (strlen(out) > 64)
+			printf("Output name length must be max 64\n");
+			
+		char* llvmfile_name = malloc(64);
 		sprintf(llvmfile_name, "%s.ll", out);
 		llvm = fopen(llvmfile_name, "wr");
 	}
-	
+
 	parse_ir();
 
 	fprintf(llvm,
