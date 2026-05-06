@@ -207,7 +207,12 @@ void parse_ir()
 {
 	uint storecast_counter = 0;
 	uint returncast_counter = 0;
-	
+
+	uint leftcast_counter = 0;
+	bool leftcast_key = 0;
+	uint rightcast_counter = 0;
+	bool rightcast_key = 0;
+
 	bool scope = 0;
 	char* current_functype = NULL;
 	for (uint i = 0; i < ir_counter; i++)
@@ -222,7 +227,6 @@ void parse_ir()
 
 				fprintf(llvm, "define %s @%s(", ir[i].func.type, 
 												ir[i].func.name);
-
 				// Handle args
 				for (uint c = 0; c < ir[i].func.argc; c++)
 				{
@@ -240,11 +244,68 @@ void parse_ir()
 
 				break;
 			case TYPE_TMP:
+				// if binary op
+				if (ir[i].tmp.right != NULL)
+				{
+					int left_order = get_torder(ir[i - 2].tmp.type);
+					int right_order = get_torder(ir[i - 1].tmp.type);
+					int current_order = get_torder(ir[i].tmp.type);
+
+					if (current_order > left_order)
+					{
+						fprintf(llvm, "%%__leftcast__%d = zext %s %%%s to %s\n",
+							leftcast_counter,
+							ir[i - 2].tmp.type,
+							ir[i - 2].tmp.name,
+							ir[i].tmp.type);
+
+						leftcast_key = 1;
+					}
+					if (current_order < left_order)
+					{
+						fprintf(llvm, "%%__leftcast__%d = trunc %s %%%s to %s\n",
+							leftcast_counter,
+							ir[i - 2].tmp.type,
+							ir[i - 2].tmp.name,
+							ir[i].tmp.type);
+
+						leftcast_key = 1;
+					}
+					if (current_order > right_order)
+					{
+						fprintf(llvm, "%%__rightcast__%d = zext %s %%%s to %s\n",
+							rightcast_counter,
+							ir[i - 1].tmp.type,
+							ir[i - 1].tmp.name,
+							ir[i].tmp.type);
+
+						rightcast_key = 1;
+					}
+					if (current_order < right_order)
+					{
+						fprintf(llvm, "%%__rightcast__%d = trunc %s %%%s to %s\n",
+							rightcast_counter,
+							ir[i - 1].tmp.type,
+							ir[i - 1].tmp.name,
+							ir[i].tmp.type);
+
+						rightcast_key = 1;
+					}
+				}
+
 				if (ir[i].tmp.op != OP_NOT)
 					fprintf(llvm, "%%%s = ", ir[i].tmp.name);
 
 				switch (ir[i].tmp.op)
 				{
+					case OP_CONST:
+						fprintf(llvm, "add %s %s, 0\n", ir[i].tmp.type,
+							ir[i].tmp.left);
+						break;
+					case OP_LOAD:
+						fprintf(llvm, "load %s, %s* %%%s\n", ir[i].tmp.type,
+							ir[i].tmp.type, ir[i].tmp.left);
+						break;
 					case OP_NOT:
 						fprintf(llvm, "%%__notcast__ = icmp eq %s %%%s, 0\n", 
 							ir[i].tmp.type,
@@ -252,17 +313,32 @@ void parse_ir()
 						fprintf(llvm, "%%%s = zext i1 %%__notcast__ to %s\n", 
 							ir[i].tmp.name, 
 							ir[i].tmp.type);
-						break;	
-					case OP_CONST:
-						fprintf(llvm, "add %s %s, 0\n", ir[i].tmp.type, 
-							ir[i].tmp.left);
-						break;
-					case OP_LOAD:
-						fprintf(llvm, "load %s, %s* %%%s\n", ir[i].tmp.type,
-							ir[i].tmp.type, ir[i].tmp.left);
 						break;
 					default:
-				}
+						if (ir[i].tmp.right != NULL)
+						{
+							/* Binary Handle */
+							fprintf(llvm, "%s %s", ir[i].tmp.oper, ir[i].tmp.type);
+
+							if (leftcast_key)
+							{
+								fprintf(llvm, " %%__leftcast__%d,", leftcast_counter);
+								leftcast_key = 0;
+								leftcast_counter++;
+							}
+							else
+								fprintf(llvm, " %%%s,", ir[i].tmp.left);
+
+							if (rightcast_key)
+							{
+								fprintf(llvm, " %%__rightcast__%d\n", rightcast_counter);
+								rightcast_key = 0;
+								rightcast_counter++;
+							}
+							else
+								fprintf(llvm, " %%%s\n", ir[i].tmp.right);
+						}
+					}
 				break;
 			case TYPE_ALLOCATE:
 				fprintf(llvm, "%%%s = alloca %s\n", ir[i].allocate.var_name, ir[i].allocate.type);

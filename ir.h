@@ -56,6 +56,7 @@ typedef struct
 			char* type;
 			char* name;
 			OP_TYPE op;
+			char* oper;
 			char* left;
 			char* right;
 
@@ -65,18 +66,18 @@ typedef struct
 		tmp;
 
 		struct  
-		{  
-			char* name;  
-			char* type;  
-			uint argc;  
+		{
+			char* name;
+			char* type;
+			uint argc;
 			arg* args;
 		}
 		func;
 
 		struct
-		{  
+		{
 			char* var_name;
-			char* type;  
+			char* type;
 		}
 		allocate;
 
@@ -85,36 +86,37 @@ typedef struct
 			char* var_name;
 			char* type;
 			char* value;
-		}  
-		store;  
+		}
+		store;
 
-		struct  
-		{  
-			char* value;  
-			char* label;  
-		}  
-		jump;  
+		struct
+		{
+			char* condition;
+			char* value;
+			char* label;
+		}
+		jump;
 
-		struct  
-		{  
-			char* label_name;  
-		}  
-		label;  
+		struct
+		{
+			char* label_name;
+		}
+		label;
 
-		struct  
-		{  
-			char* callee;  
-			uint argc;  
-			arg* args;  
-		}  
-		null_call;  
+		struct
+		{
+			char* callee;
+			uint argc;
+			arg* args;
+		}
+		null_call;
 
-		struct  
-		{  
+		struct
+		{
 			char* type;
-			char* value;  
-		}  
-		ret;  
+			char* value;
+		}
+		ret;
 	};
 }
 IR;

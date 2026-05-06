@@ -1,8 +1,8 @@
 #
 i32 main()
 {
-	i8 a = 0;
-	i8 b = a;
-	i16 c = b;
-	return c;
+	i8 a = 2;
+	i16 c = 11;
+	i32 b = c + a;
+	return b;
 }

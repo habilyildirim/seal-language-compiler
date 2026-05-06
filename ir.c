@@ -43,10 +43,11 @@ void emit_ret(char* type, char* value)
 	ir_counter++;
 }
 
-void emit_tmp_singleop(OP_TYPE optype, char* type, char* name, char* left, char* right)
+void emit_tmp_singleop(OP_TYPE optype, char* type, char* name, char* left, char* right, char* oper)
 {
 	ir = realloc(ir, sizeof(IR) * (ir_counter + 1));
 	ir[ir_counter].type = TYPE_TMP;
+	ir[ir_counter].tmp.oper = oper;
 	ir[ir_counter].tmp.type = type;
 	ir[ir_counter].tmp.name = name;
 	ir[ir_counter].tmp.left = left;
@@ -57,12 +58,6 @@ void emit_tmp_singleop(OP_TYPE optype, char* type, char* name, char* left, char*
 	ir[ir_counter].tmp.op = optype;
 	ir_counter++;
 }
-
-/*
-void emit_tmp_multiop(char* op, char* type, char* name, char* left, char* right)
-{
-}
-*/
 
 void emit_alloc(char* var_name, char* type)
 {
@@ -133,21 +128,21 @@ char* expr(EXPR* e)
 													 e->literal);
 
 						emit_tmp_singleop(OP_CONST, ir[ir_counter - 1].tmp.type,
-													result_literal, e->literal, NULL);
+													result_literal, e->literal, NULL, NULL);
 						break;
 					case TYPE_ALLOCATE:
 						fprintf(ir_source, " %s %s", ir[ir_counter - 1].allocate.type,
 													 e->literal);
 						
 						emit_tmp_singleop(OP_CONST, ir[ir_counter - 1].allocate.type,
-													result_literal, e->literal, NULL);
+													result_literal, e->literal, NULL, NULL);
 						break;
 					case TYPE_STORE:
 						fprintf(ir_source, " %s %s", ir[ir_counter - 1].store.type, 
 													 e->literal);
 
 						emit_tmp_singleop(OP_CONST, ir[ir_counter - 1].store.type,
-													result_literal, e->literal, NULL);
+													result_literal, e->literal, NULL, NULL);
 						break;
 					default:
 				}
@@ -158,7 +153,7 @@ char* expr(EXPR* e)
 											  e->literal);
 
 				emit_tmp_singleop(OP_CONST, type_control(e->literal), 
-											result_literal, e->literal, NULL);
+											result_literal, e->literal, NULL, NULL);
 			}
 
 			tmp_counter++;
@@ -170,11 +165,9 @@ char* expr(EXPR* e)
 			char* result_identifier = NULL;
 			asprintf(&result_identifier, "t%d", tmp_counter);
 
-			fprintf(ir_source, "tmp t%d load i32 %s\n",
-					tmp_counter,
-					e->identifier);
+			fprintf(ir_source, "tmp t%d load i32 %s\n", tmp_counter, e->identifier);
 
-			emit_tmp_singleop(OP_LOAD, "i32", result_identifier, e->identifier, NULL);
+			emit_tmp_singleop(OP_LOAD, "i32", result_identifier, e->identifier, NULL, NULL);
 
 			tmp_counter++;
 			return result_identifier;
@@ -247,37 +240,84 @@ char* expr(EXPR* e)
 				asprintf(&right, "t%d", tmp_counter - 1);
 
 			char* oper = NULL;
+			OP_TYPE _oper;
 
 			if (strcmp(e->binary.op, "*") == 0) 
+			{
 				oper = "mul";
-			if (strcmp(e->binary.op, "%") == 0) 
-				oper = "mod";
-			if (strcmp(e->binary.op, "/") == 0) 
-				oper = "div";
-			if (strcmp(e->binary.op, "-") == 0) 
-				oper = "sub";
-			if (strcmp(e->binary.op, "+") == 0) 
-				oper = "add";
-			if (strcmp(e->binary.op, "==") == 0) 
-				oper = "cmp_eq";
-			if (strcmp(e->binary.op, "!=") == 0) 
-				oper = "cmp_ne";
-			if (strcmp(e->binary.op, ">") == 0) 
-				oper = "cmp_gt";
-			if (strcmp(e->binary.op, "<") == 0) 
-				oper = "cmp_lt";
-			if (strcmp(e->binary.op, ">=") == 0) 
-				oper = "cmp_ge";
-			if (strcmp(e->binary.op, "<=") == 0) 
-				oper = "cmp_le";
+				_oper = OP_MUL;
+			}
 
-			fprintf(ir_source, "tmp t%d %s", tmp_counter, oper);
+			if (strcmp(e->binary.op, "%") == 0) 
+			{
+				oper = "srem";
+				_oper = OP_MOD;
+			}
+				
+			if (strcmp(e->binary.op, "/") == 0) 
+			{
+				oper = "sdiv";
+				_oper = OP_DIV;
+			}
+
+			if (strcmp(e->binary.op, "-") == 0) 
+			{
+				oper = "sub";
+				_oper = OP_SUB;
+			}
+
+			if (strcmp(e->binary.op, "+") == 0) 
+			{
+				oper = "add";
+				_oper = OP_ADD;
+			}
+
+			if (strcmp(e->binary.op, "==") == 0) 
+			{
+				oper = "cmp_eq";
+				_oper = OP_CMP_EQ;
+			}
+			
+			if (strcmp(e->binary.op, "!=") == 0) 
+			{
+				oper = "cmp_ne";
+				_oper = OP_CMP_NE;
+			}
+
+			if (strcmp(e->binary.op, ">") == 0) 
+			{
+				oper = "cmp_gt";
+				_oper = OP_CMP_GT;
+			}
+
+			if (strcmp(e->binary.op, "<") == 0) 
+			{
+				oper = "cmp_lt";
+				_oper = OP_CMP_LT;
+			}
+
+			if (strcmp(e->binary.op, ">=") == 0) 
+			{
+				oper = "cmp_ge";
+				_oper = OP_CMP_GE;
+			}
+
+			if (strcmp(e->binary.op, "<=") == 0) 
+			{
+				oper = "cmp_le";
+				_oper = OP_CMP_LE;
+			}
+			
+			tmp_counter++;
+			asprintf(&result_binary, "t%d", tmp_counter - 1);
+			
+			fprintf(ir_source, "tmp %s t%d %s", ir[ir_counter - 1].tmp.type, tmp_counter, oper);
 			fprintf(ir_source, " %s", left);
 			fprintf(ir_source, " %s\n", right);
 
-			tmp_counter++;
-
-			asprintf(&result_binary, "t%d", tmp_counter - 1);
+			emit_tmp_singleop(_oper, ir[ir_counter - 1].tmp.type, 
+				result_binary, 
+				left, right, oper);
 			return result_binary;
 		}
 
@@ -302,8 +342,7 @@ char* expr(EXPR* e)
 			asprintf(&result_not, "t%d", tmp_counter);
 
 			emit_tmp_singleop(OP_NOT, ir[ir_counter - 1].tmp.type, result_not,
-				not_value,
-				NULL);
+				not_value, NULL, NULL);
 
 			fprintf(ir_source, "tmp %s not %s %s\n", result_not, 
 				ir[ir_counter - 1].tmp.type, 
@@ -480,13 +519,13 @@ void ir_main()
 				fprintf(ir_source, "jmp if_true %s %s\n",
 							expr(ast[i].jumper.condition),
 							ast[i].jumper.label);
-				break;	
+				break;
 			}
 
 			case LABEL:
 			{
 				fprintf(ir_source, "label %s\n", ast[i].label.name);
-				break;	
+				break;
 			}
 			default:
 		}
