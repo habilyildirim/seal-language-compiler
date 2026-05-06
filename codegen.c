@@ -26,6 +26,21 @@
 
 FILE* llvm;
 
+IR* tmp_buffer;
+uint tmpbuffer_counter = 0;
+
+char* get_tmptype(char* tmp_name)
+{
+	for (uint i = 0; i < tmpbuffer_counter; i++)
+	{
+		if (strcmp(tmp_buffer[i].tmp.name, tmp_name) == 0)
+			return tmp_buffer[i].tmp.type;
+	}
+
+	printf(tmp_name);
+	return NULL;
+}
+
 void clear(char* out)
 {
 	if (out == NULL)
@@ -193,18 +208,22 @@ const type_order _type_order[] =
 
 int get_torder(char* type)
 {
+	if (type == NULL)
+		return -1; 
+
 	for (uint i = 0; i != TYPE_ORDER_SIZE; i++)
 	{
 		if (strcmp(_type_order[i].type, type) == 0)
 			return _type_order[i].order;
 	}
 
-	// INVALID TYPE
-	return -1;
+	return -1; // unsafe will be change later
 }
 
 void parse_ir()
 {
+	tmp_buffer = malloc(sizeof(IR) * 2);
+	
 	uint storecast_counter = 0;
 	uint returncast_counter = 0;
 
@@ -247,16 +266,19 @@ void parse_ir()
 				// if binary op
 				if (ir[i].tmp.right != NULL)
 				{
-					int left_order = get_torder(ir[i - 2].tmp.type);
-					int right_order = get_torder(ir[i - 1].tmp.type);
+					char* tmpleft_type = get_tmptype(ir[i].tmp.left);
+					char* tmpright_type = get_tmptype(ir[i].tmp.right);
+					
+					int left_order = get_torder(tmpleft_type);
+					int right_order = get_torder(tmpright_type);
 					int current_order = get_torder(ir[i].tmp.type);
 
 					if (current_order > left_order)
 					{
 						fprintf(llvm, "%%__leftcast__%d = zext %s %%%s to %s\n",
 							leftcast_counter,
-							ir[i - 2].tmp.type,
-							ir[i - 2].tmp.name,
+							tmpleft_type,
+							ir[i].tmp.left,
 							ir[i].tmp.type);
 
 						leftcast_key = 1;
@@ -265,8 +287,8 @@ void parse_ir()
 					{
 						fprintf(llvm, "%%__leftcast__%d = trunc %s %%%s to %s\n",
 							leftcast_counter,
-							ir[i - 2].tmp.type,
-							ir[i - 2].tmp.name,
+							tmpleft_type,
+							ir[i].tmp.left,
 							ir[i].tmp.type);
 
 						leftcast_key = 1;
@@ -275,8 +297,8 @@ void parse_ir()
 					{
 						fprintf(llvm, "%%__rightcast__%d = zext %s %%%s to %s\n",
 							rightcast_counter,
-							ir[i - 1].tmp.type,
-							ir[i - 1].tmp.name,
+							tmpright_type,
+							ir[i].tmp.right,
 							ir[i].tmp.type);
 
 						rightcast_key = 1;
@@ -285,8 +307,8 @@ void parse_ir()
 					{
 						fprintf(llvm, "%%__rightcast__%d = trunc %s %%%s to %s\n",
 							rightcast_counter,
-							ir[i - 1].tmp.type,
-							ir[i - 1].tmp.name,
+							tmpright_type,
+							ir[i].tmp.right,
 							ir[i].tmp.type);
 
 						rightcast_key = 1;
@@ -301,10 +323,20 @@ void parse_ir()
 					case OP_CONST:
 						fprintf(llvm, "add %s %s, 0\n", ir[i].tmp.type,
 							ir[i].tmp.left);
+
+						tmp_buffer[tmpbuffer_counter].tmp.name = ir[i].tmp.name;
+						tmp_buffer[tmpbuffer_counter].tmp.type = ir[i].tmp.type;
+						tmpbuffer_counter++;
+						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						break;
 					case OP_LOAD:
 						fprintf(llvm, "load %s, %s* %%%s\n", ir[i].tmp.type,
 							ir[i].tmp.type, ir[i].tmp.left);
+
+						tmp_buffer[tmpbuffer_counter].tmp.name = ir[i].tmp.name;
+						tmp_buffer[tmpbuffer_counter].tmp.type = ir[i].tmp.type;
+						tmpbuffer_counter++;
+						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						break;
 					case OP_NOT:
 						fprintf(llvm, "%%__notcast__ = icmp eq %s %%%s, 0\n", 
@@ -338,6 +370,12 @@ void parse_ir()
 							else
 								fprintf(llvm, " %%%s\n", ir[i].tmp.right);
 						}
+
+						tmp_buffer[tmpbuffer_counter].tmp.name = ir[i].tmp.name;
+						tmp_buffer[tmpbuffer_counter].tmp.type = ir[i].tmp.type;
+						tmpbuffer_counter++;
+						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
+						break;
 					}
 				break;
 			case TYPE_ALLOCATE:
@@ -421,7 +459,6 @@ void codegen_main(char* out)
 		sprintf(llvmfile_name, "%s.ll", out);
 		llvm = fopen(llvmfile_name, "wr");
 	}
-
 	parse_ir();
 
 	fprintf(llvm,

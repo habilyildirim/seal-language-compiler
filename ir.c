@@ -19,6 +19,7 @@
 
 #include "parser.h"
 #include "ir.h"
+#include "semantic.h"
 #include <limits.h>
 #include <string.h>
 
@@ -33,6 +34,8 @@ argsary;
 
 IR* ir = NULL;
 uint ir_counter = 0;
+
+char* general_scope = NULL;
 
 void emit_ret(char* type, char* value)
 {
@@ -76,6 +79,21 @@ void emit_store(char* var_name, char* type, char* value)
 	ir[ir_counter].store.type = type;
 	ir[ir_counter].store.value = value;
 	ir_counter++;
+}
+
+char* get_vartype(char* var_name)
+{
+	for (uint i = 0; i < var_counter; i++)
+	{
+		if (strcmp(var_buffer[i].var.name, var_name) == 0 && 
+			(strcmp(var_buffer[i].scope, general_scope) == 0 || strcmp(var_buffer[i].scope, "global") == 0)) 
+		{
+			return var_buffer[i].var.type;
+		}
+	}
+
+	printf("test");
+	exit(0);
 }
 
 char* type_control(const char* str)
@@ -165,9 +183,11 @@ char* expr(EXPR* e)
 			char* result_identifier = NULL;
 			asprintf(&result_identifier, "t%d", tmp_counter);
 
-			fprintf(ir_source, "tmp t%d load i32 %s\n", tmp_counter, e->identifier);
+			char* type = get_vartype(e->identifier);
+			
+			fprintf(ir_source, "tmp t%d load %s %s\n", tmp_counter, type, e->identifier);
 
-			emit_tmp_singleop(OP_LOAD, "i32", result_identifier, e->identifier, NULL, NULL);
+			emit_tmp_singleop(OP_LOAD, type, result_identifier, e->identifier, NULL, NULL);
 
 			tmp_counter++;
 			return result_identifier;
@@ -446,12 +466,11 @@ void ir_main()
 					ir[ir_counter].func.args[l].type = ast[i].function.args[l].type;
 					ir[ir_counter].func.args[l].name = ast[i].function.args[l].name;
 				}
-
 				fprintf(ir_source, "\n");
 
+				general_scope = ast[i].function.name;
 				ir = realloc(ir, sizeof(IR) * (ir_counter + 1));
 				ir_counter++;
-
 				break;
 			}
 
@@ -482,7 +501,7 @@ void ir_main()
 				char* result = expr(ast[i]._return.value);
 
 				fprintf(ir_source, "ret");
-				if (!isdigit(result[0]))
+				if (1) //!isdigit(result[0]))
 				{
 					fprintf(ir_source, " %s %s\n", ir[ir_counter - 1].tmp.type, result);
 					emit_ret(ir[ir_counter - 1].tmp.type, result);
