@@ -1,16 +1,6 @@
-# 
-i32 main()
+# i32 main()
 {
-    i8 a = 0x10;
-    i8 b = 2;
-    i8 c = 3;
-    i8 d = 4;
+	i8 t = 5;
 
-    i8 r1 = a + b * c - d;
-    i8 r2 = (a + b) * (c - d);
-    i8 r3 = a + (b * (c - d));
-    i8 r4 = ((a + b) * c) - d;
-
-    i8 result = r1 + r2 + r3 + r4;
-    return result;
+    return t;
 }

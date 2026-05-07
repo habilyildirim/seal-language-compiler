@@ -21,7 +21,7 @@ function install()
 end
 
 function run()
-    os.execute("./" .. target .. " --Compile " .. arg[2]);
+    os.execute("./" .. target .. " --Save llvm --Compile " .. arg[2]);
 end
 
 function clear()

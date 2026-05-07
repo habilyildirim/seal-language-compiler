@@ -77,7 +77,7 @@ const _roperator relational_operator_table[] =
 
 const _data_type data_type_table[] =
 {
-	{"binary",    DTYPE_BINARY},
+	{"i1",		  DTYPE_BINARY},
 	{"integer",   DTYPE_INTEGER},
 	{"i8",        DTYPE_INTEGER8},
 	{"i16",       DTYPE_INTEGER16},

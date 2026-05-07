@@ -59,6 +59,7 @@ typedef struct
 			char* oper;
 			char* left;
 			char* right;
+			bool lo_key;
 
 			uint argc;
 			arg* args;

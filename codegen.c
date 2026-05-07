@@ -37,7 +37,6 @@ char* get_tmptype(char* tmp_name)
 			return tmp_buffer[i].tmp.type;
 	}
 
-	printf(tmp_name);
 	return NULL;
 }
 
@@ -198,7 +197,7 @@ type_order;
 
 const type_order _type_order[] =
 {
-	{0, "binary"},
+	{0, "i1"},
 	{1, "i8"},
 	{2, "i16"},
 	{3, "i32"},
@@ -232,6 +231,8 @@ void parse_ir()
 	uint rightcast_counter = 0;
 	bool rightcast_key = 0;
 
+	uint notcast_counter = 0;
+
 	bool scope = 0;
 	char* current_functype = NULL;
 	for (uint i = 0; i < ir_counter; i++)
@@ -264,6 +265,7 @@ void parse_ir()
 				break;
 			case TYPE_TMP:
 				// if binary op
+				int current_order = 0;
 				if (ir[i].tmp.right != NULL)
 				{
 					char* tmpleft_type = get_tmptype(ir[i].tmp.left);
@@ -271,47 +273,95 @@ void parse_ir()
 					
 					int left_order = get_torder(tmpleft_type);
 					int right_order = get_torder(tmpright_type);
-					int current_order = get_torder(ir[i].tmp.type);
+					current_order = get_torder(ir[i].tmp.type);
 
-					if (current_order > left_order)
+					if (!current_order && !ir[i].tmp.lo_key)
 					{
-						fprintf(llvm, "%%__leftcast__%d = zext %s %%%s to %s\n",
-							leftcast_counter,
-							tmpleft_type,
-							ir[i].tmp.left,
-							ir[i].tmp.type);
+						if (left_order < 1)
+						{
+							fprintf(llvm, "%%__leftcast__%d = zext %s %%%s to i8\n",
+								leftcast_counter,
+								tmpleft_type,
+								ir[i].tmp.left);
 
-						leftcast_key = 1;
+							leftcast_key = 1;
+						}
+
+						if (left_order > 1)
+						{
+							fprintf(llvm, "%%__leftcast__%d = trunc %s %%%s to i8\n",
+								leftcast_counter,
+								tmpleft_type,
+								ir[i].tmp.left);
+
+							leftcast_key = 1;
+						}
+
+						if (right_order < 1)
+						{
+							fprintf(llvm, "%%__rightcast__%d = zext %s %%%s to i8\n",
+								rightcast_counter,
+								tmpright_type,
+								ir[i].tmp.right);
+
+							rightcast_key = 1;
+						}
+
+						if (right_order > 1)
+						{
+							fprintf(llvm, "%%__rightcast__%d = trunc %s %%%s to i8\n",
+								rightcast_counter,
+								tmpright_type,
+								ir[i].tmp.right);
+
+							rightcast_key = 1;
+						}
 					}
-					if (current_order < left_order)
+					else
 					{
-						fprintf(llvm, "%%__leftcast__%d = trunc %s %%%s to %s\n",
-							leftcast_counter,
-							tmpleft_type,
-							ir[i].tmp.left,
-							ir[i].tmp.type);
+						if (current_order > left_order)
+						{
+							fprintf(llvm, "%%__leftcast__%d = zext %s %%%s to %s\n",
+								leftcast_counter,
+								tmpleft_type,
+								ir[i].tmp.left,
+								ir[i].tmp.type);
 
-						leftcast_key = 1;
-					}
-					if (current_order > right_order)
-					{
-						fprintf(llvm, "%%__rightcast__%d = zext %s %%%s to %s\n",
-							rightcast_counter,
-							tmpright_type,
-							ir[i].tmp.right,
-							ir[i].tmp.type);
+							leftcast_key = 1;
+						}
 
-						rightcast_key = 1;
-					}
-					if (current_order < right_order)
-					{
-						fprintf(llvm, "%%__rightcast__%d = trunc %s %%%s to %s\n",
-							rightcast_counter,
-							tmpright_type,
-							ir[i].tmp.right,
-							ir[i].tmp.type);
+						if (current_order > right_order)
+						{
+							fprintf(llvm, "%%__rightcast__%d = zext %s %%%s to %s\n",
+								rightcast_counter,
+								tmpright_type,
+								ir[i].tmp.right,
+								ir[i].tmp.type);
 
-						rightcast_key = 1;
+							rightcast_key = 1;
+						}
+
+						if (current_order < left_order)
+						{
+							fprintf(llvm, "%%__leftcast__%d = trunc %s %%%s to %s\n",
+								leftcast_counter,
+								tmpleft_type,
+								ir[i].tmp.left,
+								ir[i].tmp.type);
+
+							leftcast_key = 1;
+						}
+
+						if (current_order < right_order)
+						{
+							fprintf(llvm, "%%__rightcast__%d = trunc %s %%%s to %s\n",
+								rightcast_counter,
+								tmpright_type,
+								ir[i].tmp.right,
+								ir[i].tmp.type);
+
+							rightcast_key = 1;
+						}
 					}
 				}
 
@@ -339,18 +389,24 @@ void parse_ir()
 						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						break;
 					case OP_NOT:
-						fprintf(llvm, "%%__notcast__ = icmp eq %s %%%s, 0\n", 
+						fprintf(llvm, "%%__notcast__%d = icmp eq %s %%%s, 0\n",
+							notcast_counter,
 							ir[i].tmp.type,
 							ir[i].tmp.left);
 						fprintf(llvm, "%%%s = zext i1 %%__notcast__ to %s\n", 
-							ir[i].tmp.name, 
+							ir[i].tmp.name,
 							ir[i].tmp.type);
+
+						notcast_counter++;
 						break;
 					default:
+						/* Binary Handle */
 						if (ir[i].tmp.right != NULL)
 						{
-							/* Binary Handle */
-							fprintf(llvm, "%s %s", ir[i].tmp.oper, ir[i].tmp.type);
+							if (!current_order && !ir[i].tmp.lo_key)
+								fprintf(llvm, "%s i8", ir[i].tmp.oper);
+							else
+								fprintf(llvm, "%s %s", ir[i].tmp.oper, ir[i].tmp.type);
 
 							if (leftcast_key)
 							{
@@ -371,8 +427,15 @@ void parse_ir()
 								fprintf(llvm, " %%%s\n", ir[i].tmp.right);
 						}
 
+						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						tmp_buffer[tmpbuffer_counter].tmp.name = ir[i].tmp.name;
-						tmp_buffer[tmpbuffer_counter].tmp.type = ir[i].tmp.type;
+						
+						if (!current_order && !ir[i].tmp.lo_key)
+							tmp_buffer[tmpbuffer_counter].tmp.type = "i8";
+						else
+							tmp_buffer[tmpbuffer_counter].tmp.type = ir[i].tmp.type;
+							
+						tmp_buffer[tmpbuffer_counter].tmp.lo_key = ir[i].tmp.lo_key;
 						tmpbuffer_counter++;
 						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						break;
@@ -382,7 +445,9 @@ void parse_ir()
 				fprintf(llvm, "%%%s = alloca %s\n", ir[i].allocate.var_name, ir[i].allocate.type);
 				break;
 			case TYPE_STORE:
-				const int tmp_order = get_torder(ir[i - 1].tmp.type); 
+				char* tmp_type = get_tmptype(ir[i].store.value);
+				
+				int tmp_order = get_torder(tmp_type);
 				const int storevar_order = get_torder(ir[i].store.type);
 
 				if (tmp_order == storevar_order)
@@ -400,9 +465,9 @@ void parse_ir()
 				else
 					fprintf(llvm, " trunc");
 
-				fprintf(llvm, " %s %%%s to %s\n", 
-					ir[i - 1].tmp.type, 
-					ir[i - 1].tmp.name, 
+				fprintf(llvm, " %s %%%s to %s\n",
+					tmp_type,
+					ir[i].store.value,
 					ir[i].store.type);
 
 				fprintf(llvm, "store %s %%__storecast__%d, %s* %%%s\n",
