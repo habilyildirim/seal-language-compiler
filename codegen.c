@@ -389,15 +389,32 @@ void parse_ir()
 						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						break;
 					case OP_NOT:
-						fprintf(llvm, "%%__notcast__%d = icmp eq %s %%%s, 0\n",
-							notcast_counter,
-							ir[i].tmp.type,
-							ir[i].tmp.left);
-						fprintf(llvm, "%%%s = zext i1 %%__notcast__ to %s\n", 
-							ir[i].tmp.name,
-							ir[i].tmp.type);
+						if (strcmp(ir[i].tmp.type, "i1") == 0)
+						{
+							fprintf(llvm, "%%%s = icmp eq %s %%%s, 0\n",
+								ir[i].tmp.name,
+								ir[i].tmp.type,
+								ir[i].tmp.left);
+						}
+						else
+						{
+							fprintf(llvm, "%%__notcast__%d = icmp eq %s %%%s, 0\n",
+								notcast_counter,
+								ir[i].tmp.type,
+								ir[i].tmp.left);
 
-						notcast_counter++;
+							fprintf(llvm, "%%%s = zext i1 %%__notcast__ to %s\n", 
+								ir[i].tmp.name,
+								ir[i].tmp.type);
+
+							notcast_counter++;
+						}
+
+						tmp_buffer[tmpbuffer_counter].tmp.name = ir[i].tmp.name;
+						tmp_buffer[tmpbuffer_counter].tmp.type = "i1";	
+						tmp_buffer[tmpbuffer_counter].tmp.lo_key = ir[i].tmp.lo_key;
+						tmpbuffer_counter++;
+						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						break;
 					default:
 						/* Binary Handle */
