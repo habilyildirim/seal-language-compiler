@@ -276,7 +276,7 @@ void parse_ir()
 			case TYPE_TMP:
 				// if binary op
 				int current_order = 0;
-				if (ir[i].tmp.right != NULL)
+				if (ir[i].tmp.right != NULL && ir[i].tmp.left != NULL)
 				{
 					char* tmpleft_type = get_tmptype(ir[i].tmp.left);
 					char* tmpright_type = get_tmptype(ir[i].tmp.right);
@@ -438,6 +438,24 @@ void parse_ir()
 						tmp_buffer[tmpbuffer_counter].tmp.name = ir[i].tmp.name;
 						tmp_buffer[tmpbuffer_counter].tmp.type = "i1";
 						tmp_buffer[tmpbuffer_counter].tmp.lo_key = 1;
+						tmpbuffer_counter++;
+						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
+						break;
+					case OP_NEG:
+						if (get_tmplokey(ir[i].tmp.right))
+						{
+							fprintf(llvm, "sub i1 0, %%%s\n", ir[i].tmp.right);
+							tmp_buffer[tmpbuffer_counter].tmp.type = "i1";
+							tmp_buffer[tmpbuffer_counter].tmp.lo_key = 1;
+						}
+						else
+						{
+							fprintf(llvm, "sub %s 0, %%%s\n", ir[i].tmp.type, ir[i].tmp.right);
+							tmp_buffer[tmpbuffer_counter].tmp.type = ir[i].tmp.type;
+							tmp_buffer[tmpbuffer_counter].tmp.lo_key = 0;
+						}
+
+						tmp_buffer[tmpbuffer_counter].tmp.name = ir[i].tmp.name;
 						tmpbuffer_counter++;
 						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						break;

@@ -213,7 +213,6 @@ void emit_token(const _token_type tt, _token_group tg, const char* value, const 
 	tokens[tokens_counter].line = line_counter;
 	tokens[tokens_counter].column = column_counter;
 	tokens[tokens_counter].file = "test";
-	// free(tmp_tokensr);
 }
 
 typedef enum
@@ -541,7 +540,7 @@ void read_integer_literal(uint *i)
 			lexer_error(line_counter, column_counter, MULTIPLE_DOTS);
 
 		update_position(*i);
-		read_buffer(buffer, *i, READ_INTEGER_LITERAL);
+		read_buffer(buffer, *i, READ_INTEGER_LITERAL); 
 	}
 
 	if (isalpha(buffer[*i]) || strcmp(lexeme_buffer, ".") == 0)

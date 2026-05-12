@@ -49,9 +49,9 @@ typedef struct
 	IR_TYPE type;
 	char* scope;
 
-	union  
-	{  
-		struct  
+	union
+	{
+		struct
 		{
 			char* type;
 			char* name;
@@ -66,7 +66,7 @@ typedef struct
 		}
 		tmp;
 
-		struct  
+		struct
 		{
 			char* name;
 			char* type;

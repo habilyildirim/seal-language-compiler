@@ -353,6 +353,9 @@ char* expr(EXPR* e)
 			asprintf(&result_unary, "t%d", tmp_counter);
 			fprintf(ir_source, "tmp t%d neg %s\n", tmp_counter, unary_value);
 
+			emit_tmp_singleop(OP_NEG, ir[ir_counter - 1].tmp.type, result_unary, 
+				NULL, unary_value, NULL, 0);
+
 			tmp_counter++;
 			return result_unary;
 		}
