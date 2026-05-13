@@ -196,58 +196,6 @@ char* expr(EXPR* e)
 		{
 			char* result_binary = NULL;
 
-			if (strcmp(e->binary.op, "&&") == 0)
-			{
-				char* left = expr(e->binary.left);
-				if (left == NULL)
-					asprintf(&left, "t%d", tmp_counter - 1);
-
-				fprintf(ir_source, "jmp if_false %s L%d_false\n", left, irlabel_counter);
-
-				char* right = expr(e->binary.right);
-				if (right == NULL)
-					asprintf(&right, "t%d", tmp_counter - 1);
-
-				fprintf(ir_source, "jmp if_false %s L%d_false\n", right, irlabel_counter);
-
-				fprintf(ir_source, "tmp t%d const i32 1\n", tmp_counter);
-				fprintf(ir_source, "jmp L%d_end\n", irlabel_counter);
-				fprintf(ir_source, "label L%d_false\n", irlabel_counter);
-				fprintf(ir_source, "tmp t%d const i32 0\n", tmp_counter);
-				fprintf(ir_source, "label L%d_end\n", irlabel_counter);
-				asprintf(&result_binary, "t%d", tmp_counter);
-
-				tmp_counter++;
-				irlabel_counter++;
-				return result_binary;
-			}
-
-			if (strcmp(e->binary.op, "||") == 0)
-			{
-				char* left = expr(e->binary.left);
-				if (left == NULL)
-					asprintf(&left, "t%d", tmp_counter - 1);
-
-				fprintf(ir_source, "jmp if_true %s L%d_true\n", left, irlabel_counter);
-
-				char* right = expr(e->binary.right);
-				if (right == NULL)
-					asprintf(&right, "t%d", tmp_counter - 1);
-
-				fprintf(ir_source, "jmp if_true %s L%d_true\n", right, irlabel_counter);
-
-				fprintf(ir_source, "tmp t%d const i32 0\n", tmp_counter);
-				fprintf(ir_source, "jmp L%d_end\n", irlabel_counter);
-				fprintf(ir_source, "label L%d_true\n", irlabel_counter);
-				fprintf(ir_source, "tmp t%d const 1\n", tmp_counter);
-				fprintf(ir_source, "label L%d_end\n", irlabel_counter);
-				asprintf(&result_binary, "t%d", tmp_counter);
-
-				tmp_counter++;
-				irlabel_counter++;
-				return result_binary;
-			}
-
 			char* left = expr(e->binary.left);
 			if (left == NULL)
 				asprintf(&left, "t%d", tmp_counter - 1);
@@ -289,6 +237,18 @@ char* expr(EXPR* e)
 			{
 				oper = "add";
 				_oper = OP_ADD;
+			}
+
+			if (strcmp(e->binary.op, "&&") == 0)
+			{
+				oper = "and";
+				_oper = OP_AND;
+			}
+
+			if (strcmp(e->binary.op, "||") == 0)
+			{
+				oper = "or";
+				_oper = OP_OR;
 			}
 
 			if (strcmp(e->binary.op, "==") == 0) 

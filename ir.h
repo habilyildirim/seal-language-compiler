@@ -33,6 +33,8 @@ typedef enum
 	OP_CMP_LT,
 	OP_CMP_GE,
 	OP_CMP_LE,
+	OP_AND,
+	OP_OR
 }
 OP_TYPE;
 
