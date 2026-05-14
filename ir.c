@@ -218,10 +218,12 @@ char* expr(EXPR* e)
 			}
 			else
 			{
-				fprintf(ir_source, " %s %s\n", type_control(e->literal), 
-					e->literal);
-				emit_tmp_singleop(OP_CONST, type_control(e->literal),
-					result_literal, e->literal, NULL, NULL, 0, 0);
+				fprintf(ir_source, " %s i64\n", e->literal);
+				emit_tmp_singleop(OP_CONST, "i64", result_literal, 
+					e->literal, 
+					NULL, 
+					NULL, 
+					0, 0);
 			}
 
 			tmp_counter++;

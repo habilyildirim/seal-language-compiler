@@ -4,10 +4,11 @@ i32 b;
 i32 main()
 {
 	b = 0;
-
 	:loop
 		b = b + 1;
-	jump (b != 255) loop;
+	jump (b != 300) loop;
+	
+	i32 a = 400 - b;
 
-	return b;
+	return a;
 }
