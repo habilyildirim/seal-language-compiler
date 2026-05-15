@@ -538,9 +538,14 @@ void parse_ir()
 
 				if (tmp_order == storevar_order)
 				{
-					fprintf(llvm, "store %s %%%s, %s* %%%s\n",
+					fprintf(llvm, "store %s %%%s, %s* ",
 						ir[i].store.type, ir[i].store.value,
-						ir[i].store.type,  ir[i].store.var_name);
+						ir[i].store.type);
+
+					if (strcmp(ir[i].scope, "global") == 0)
+						fprintf(llvm, "@%s\n", ir[i].store.var_name);
+					else
+						fprintf(llvm, "%%%s\n", ir[i].store.var_name);
 
 					break;
 				}

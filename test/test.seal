@@ -1,14 +1,27 @@
-i32 b;
-
 # 
 i32 main()
 {
-	b = 0;
-	:loop
-		b = b + 1;
-	jump (b != 300) loop;
-	
-	i32 a = 400 - b;
+    i8 a = 0x10;
+    i8 b = 2;
+    i8 c = 3;
+    i8 d = 4;
 
-	return a;
+    i8 r1 = a + b * c - d;
+    i8 r2 = (a + b) * (c - d);
+    i8 r3 = a + (b * (c - d));
+    i8 r4 = ((a + b) * c) - d;
+
+	i8 result = r1 + r2 + r3 + r4;
+	
+	:test
+		result = result + 1;
+	jump (result != 255) test;
+
+    return result;
 }
+
+/~
+":test" convert to "test:"
+"jump" convert to "if"
+"if (condition) goto ;"
+~/

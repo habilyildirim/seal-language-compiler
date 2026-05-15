@@ -38,6 +38,7 @@ IR* ir = NULL;
 uint ir_counter = 0;
 
 char* general_scope = NULL;
+char* currentvar_type = NULL;
 
 void emit_ret(char* type, char* value)
 {
@@ -49,12 +50,12 @@ void emit_ret(char* type, char* value)
 	ir_counter++;
 }
 
-void emit_tmp_singleop(OP_TYPE optype, char* type, char* name, char* left, char* right, char* oper, bool lo_key, bool global_key)
+void emit_tmp_singleop(OP_TYPE optype, char* name, char* left, char* right, char* oper, bool lo_key, bool global_key)
 {
 	ir = realloc(ir, sizeof(IR) * (ir_counter + 1));
 	ir[ir_counter].type = TYPE_TMP;
 	ir[ir_counter].tmp.oper = oper;
-	ir[ir_counter].tmp.type = type;
+	ir[ir_counter].tmp.type = currentvar_type;
 	ir[ir_counter].tmp.name = name;
 	ir[ir_counter].tmp.left = left;
 	ir[ir_counter].tmp.lo_key = lo_key;
@@ -71,12 +72,12 @@ void emit_tmp_singleop(OP_TYPE optype, char* type, char* name, char* left, char*
 	ir_counter++;
 }
 
-void emit_alloc(char* var_name, char* type, bool global_key)
+void emit_alloc(char* var_name, bool global_key)
 {
 	ir = realloc(ir, sizeof(IR) * (ir_counter + 1));
 	ir[ir_counter].type = TYPE_ALLOCATE;	
 	ir[ir_counter].allocate.var_name = var_name;
-	ir[ir_counter].allocate.type = type;
+	ir[ir_counter].allocate.type = currentvar_type;
 
 	if (global_key)
 		ir[ir_counter].scope = "global";		
@@ -198,20 +199,17 @@ char* expr(EXPR* e)
 					case TYPE_TMP:
 						fprintf(ir_source, " %s %s", ir[ir_counter - 1].tmp.type, 
 							e->literal);
-						emit_tmp_singleop(OP_CONST, ir[ir_counter - 1].tmp.type,
-							result_literal, e->literal, NULL, NULL, 0, 0);
+						emit_tmp_singleop(OP_CONST, result_literal, e->literal, NULL, NULL, 0, 0);
 						break;
 					case TYPE_ALLOCATE:
 						fprintf(ir_source, " %s %s", ir[ir_counter - 1].allocate.type,
 							e->literal);
-						emit_tmp_singleop(OP_CONST, ir[ir_counter - 1].allocate.type,
-							result_literal, e->literal, NULL, NULL, 0, 0);
+						emit_tmp_singleop(OP_CONST, result_literal, e->literal, NULL, NULL, 0, 0);
 						break;
 					case TYPE_STORE:
 						fprintf(ir_source, " %s %s", ir[ir_counter - 1].store.type, 
 							e->literal);
-						emit_tmp_singleop(OP_CONST, ir[ir_counter - 1].store.type,
-							result_literal, e->literal, NULL, NULL, 0, 0);
+						emit_tmp_singleop(OP_CONST, result_literal, e->literal, NULL, NULL, 0, 0);
 						break;
 					default:
 				}
@@ -219,10 +217,10 @@ char* expr(EXPR* e)
 			else
 			{
 				fprintf(ir_source, " %s i64\n", e->literal);
-				emit_tmp_singleop(OP_CONST, "i64", result_literal, 
-					e->literal, 
-					NULL, 
-					NULL, 
+				emit_tmp_singleop(OP_CONST, result_literal,
+					e->literal,
+					NULL,
+					NULL,
 					0, 0);
 			}
 
@@ -240,14 +238,14 @@ char* expr(EXPR* e)
 			{
 				fprintf(ir_source, "tmp t%d load %s @%s\n",
 					tmp_counter, type, e->identifier);
-				emit_tmp_singleop(OP_LOAD, type, result_identifier, 
+				emit_tmp_singleop(OP_LOAD, result_identifier, 
 					e->identifier, NULL, NULL, 0, 1);
 			}
 			else
 			{
 				fprintf(ir_source, "tmp t%d load %s %s\n", 
 					tmp_counter, type, e->identifier);
-				emit_tmp_singleop(OP_LOAD, type, result_identifier, 
+				emit_tmp_singleop(OP_LOAD, result_identifier, 
 					e->identifier, NULL, NULL, 0, 0);
 			}
 
@@ -361,7 +359,7 @@ char* expr(EXPR* e)
 			fprintf(ir_source, " %s", left);
 			fprintf(ir_source, " %s\n", right);
 
-			emit_tmp_singleop(_oper, type, result_binary,
+			emit_tmp_singleop(_oper, result_binary,
 				left, right, oper, lo_key, 0);
 
 			tmp_counter++;
@@ -376,7 +374,7 @@ char* expr(EXPR* e)
 			asprintf(&result_unary, "t%d", tmp_counter);
 			fprintf(ir_source, "tmp t%d neg %s\n", tmp_counter, unary_value);
 
-			emit_tmp_singleop(OP_NEG, ir[ir_counter - 1].tmp.type, result_unary, 
+			emit_tmp_singleop(OP_NEG, result_unary, 
 				NULL, unary_value, NULL, 0, 0);
 
 			tmp_counter++;
@@ -390,7 +388,7 @@ char* expr(EXPR* e)
 
 			asprintf(&result_not, "t%d", tmp_counter);
 
-			emit_tmp_singleop(OP_NOT, ir[ir_counter - 1].tmp.type, result_not,
+			emit_tmp_singleop(OP_NOT, result_not,
 				not_value, NULL, NULL, 0, 0);
 
 			fprintf(ir_source, "tmp %s not %s %s\n", result_not, 
@@ -517,15 +515,17 @@ void ir_main()
 			case UVAR:
 			case VAR:
 			{
+				currentvar_type = ast[i].var.type;
+				
 				if (strcmp(ast[i].scope, "global") == 0)
 				{
 					fprintf(ir_source, "alloc %s %s\n", ast[i].var.name, ast[i].var.type);
-					emit_alloc(ast[i].var.name, ast[i].var.type, 1);
+					emit_alloc(ast[i].var.name, 1);
 					break;
 				}
 
 				fprintf(ir_source, "alloc %s %s\n", ast[i].var.name, ast[i].var.type);
-				emit_alloc(ast[i].var.name, ast[i].var.type, 0);
+				emit_alloc(ast[i].var.name, 0);
 
 				char* result = expr(ast[i].var.value);
 				emit_store(ast[i].var.name, ast[i].var.type, result, 0);
