@@ -2,8 +2,8 @@
 local target_file = arg[1]
 
 if not target_file then
-	print("Missing Argument.")
-	os.exit()
+     print("Missing Argument.")
+     os.exit()
 end
 
 local file_convert = target_file:gsub("%..-$", "") .. ".c"
@@ -12,21 +12,22 @@ local file_write = io.open(file_convert, "w")
 local scope = 0
 
 for line in file_read:lines() do
+
     --Multiple line comment
-	line = line:gsub("/~", "/*")
+    line = line:gsub("/~", "/*")
     line = line:gsub("~/", "*/")
     --Single line check
-	if not (line:find("/%*") or line:find("%*/")) then
+    if not (line:find("/%*") or line:find("%*/")) then
         line = line:gsub("~", "//")
-	end
+    end
 
 	if line:find("#") then
-    	if line:find("%(") and line:find("%)") then
+        if line:find("%(") and line:find("%)") then
             line = line:gsub("#", "")
-    	else
+        else
             line = ""
-    	end
-	end
+        end
+    end
 
     --Jump to if (condition given)
     line = line:gsub("%f[%w]jump%s*(%b())%s*(%w+);", "if %1 goto %2;")
@@ -41,16 +42,19 @@ for line in file_read:lines() do
     local brace_close = line:find("}")
     --bracket check
     if scope == 0 and not brace_open then
-		if line:find("int") and line:find(";") and not line:find("=") then
+        if line:find("int") and line:find(";") and not line:find("=") then
         	line = line:gsub(";", " = 0;")
-		end
-	end
+        end
+    end
 
-	if brace_open then scope = scope + 1 end
-	if brace_close then scope = scope - 1 end
-	file_write:write(line .. "\n")
+    if brace_open then scope = scope + 1 end
+    if brace_close then scope = scope - 1 end
+    file_write:write(line .. "\n")
+
 end
 
 file_read:close()
 file_write:close()
 print(file_convert)
+
+

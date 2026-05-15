@@ -1,3 +1,8 @@
+
+i3 x;
+i5 y;
+i7 z;
+
 # 
 i32 main()
 {
@@ -18,7 +23,15 @@ i32 main()
 	jump (result != 255) test;
 
     return result;
+
+    :test1
+		result1 = result1 + 1;
+	jump () test1;
+
+    return result1;
 }
+
+~ test comment
 
 /~
 ":test" convert to "test:"
