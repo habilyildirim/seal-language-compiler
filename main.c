@@ -38,7 +38,6 @@ void parse_arg(uint argc, char** argv, char* *source, char* *output_name)
 	{
 		if (strcmp(argv[i], "--Compile") == 0 || strcmp(argv[i], "-c") == 0)
 			(*source) = argv[i + 1];
-
 		if (strcmp(argv[i], "--Output") == 0 || strcmp(argv[i], "-o") == 0)
 			(*output_name) = argv[i + 1];
 
@@ -94,11 +93,11 @@ int main(int argc, char *argv[])
 
 	char* output_name = NULL;
 	char* sourcefile_path = NULL;
-	parse_arg(argc, argv, &sourcefile_path, &output_name);
 
+	parse_arg(argc, argv, &sourcefile_path, &output_name);
 	pp_main(&sourcefile_path);
 	lexer_main(root_file, rf_counter, sourcefile_path); 
-	parser_main(); //print_ast(1);
+	parser_main();
 	semantic_main();
 	ir_main(sourcefile_path);
 	codegen_main(output_name);

@@ -247,7 +247,7 @@ char* get_tbyte(char* type)
 void parse_ir()
 {
 	tmp_buffer = malloc(sizeof(IR) * 2);
-	
+
 	uint storecast_counter = 0;
 	uint returncast_counter = 0;
 	uint negcast_counter = 0;
@@ -286,9 +286,9 @@ void parse_ir()
 					if (c != ir[i].func.argc - 1)
 						fprintf(llvm, ",");
 				}
+
 				fprintf(llvm ,") {\nentry:\n");
 				current_functype = ir[i].func.type;
-
 				break;
 			case TYPE_TMP:
 				// if binary op
@@ -297,7 +297,6 @@ void parse_ir()
 				{
 					char* tmpleft_type = get_tmptype(ir[i].tmp.left);
 					char* tmpright_type = get_tmptype(ir[i].tmp.right);
-					
 					int left_order = get_torder(tmpleft_type);
 					int right_order = get_torder(tmpright_type);
 					current_order = get_torder(ir[i].tmp.type);
@@ -452,12 +451,10 @@ void parse_ir()
 						{
 							asprintf(&ptr, "ptr%d", ptr_counter);
 							ptr_counter++;
-
 							fprintf(llvm, "%%%s = getelementptr %s, %s* %%%s, %s %%%s\n",
 								ptr, ir[i].tmp.type,
 								ir[i].tmp.type, ir[i].tmp.left,
 								get_tmptype(ir[i].tmp.size), ir[i].tmp.size);
-
 							fprintf(llvm, "%%%s = load %s, %s* %%%s, align %s\n", ir[i].tmp.name, 
 								ir[i].tmp.type, ir[i].tmp.type, ptr, get_tbyte(ir[i].tmp.type));
 						}
@@ -532,17 +529,15 @@ void parse_ir()
 						for (uint c = 0; c < ir[i].tmp.argc; c++)
 						{
 							call_arg = realloc(call_arg, sizeof(call_args) * (c + 1));
-
 							uint current_order = get_torder(ir[i].tmp.args[c].type);							
 							char* value_type = get_tmptype(ir[i].tmp.args[c].name);
 							uint value_order = get_torder(value_type);
-
 							char* callcast = NULL;
+
 							if (current_order > value_order)
 							{
 								fprintf(llvm, "%%__callcast__%d = zext %s %%%s to %s\n", callcast_counter, value_type, 
-									ir[i].tmp.args[c].name, ir[i].tmp.args[c].type);
-									
+									ir[i].tmp.args[c].name, ir[i].tmp.args[c].type);	
 								asprintf(&callcast, "__callcast__%d", callcast_counter);
 								call_arg[c].arg_value = callcast;
 								callcast_counter++;
@@ -553,7 +548,6 @@ void parse_ir()
 							{
 								fprintf(llvm, "%%__callcast__%d = trunc %s %%%s to %s\n", callcast_counter, value_type, 
 									ir[i].tmp.args[c].name, ir[i].tmp.args[c].type);
-									
 								asprintf(&callcast, "__callcast__%d", callcast_counter);
 								call_arg[c].arg_value = callcast;
 								callcast_counter++;
@@ -621,6 +615,7 @@ void parse_ir()
 						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						break;
 					}
+
 				break;
 			case TYPE_ALLOCATE:
 				if (strcmp(ir[i].scope, "global") == 0)
@@ -651,13 +646,12 @@ void parse_ir()
 				char* tmp_type = get_tmptype(ir[i].store.value);
 				int tmp_order = get_torder(tmp_type);
 				const int storevar_order = get_torder(ir[i].store.type);
-
 				char* ptr = NULL;
+
 				if (ir[i].store.size != NULL)
 				{
 					asprintf(&ptr, "ptr%d", ptr_counter);
 					ptr_counter++;
-
 					fprintf(llvm, "%%%s = getelementptr %s, %s* %%%s, %s %%%s\n",
 						ptr, ir[i].store.type,
 						ir[i].store.type, ir[i].store.var_name,
@@ -677,7 +671,6 @@ void parse_ir()
 						fprintf(llvm, "store %s %%%s, %s* %%%s\n",
 							ir[i].store.type, ir[i].store.value,
 							ir[i].store.type, ir[i].store.var_name);
-
 						break;
 					}
 
@@ -731,7 +724,6 @@ void parse_ir()
 						ir[i].jump.label,
 						jumpcast_counter);
 					fprintf(llvm, "%s__false__%d:\n", ir[i].jump.label, jumpcast_counter);
-
 					jumpcast_counter++;
 					break;
 				}
@@ -740,14 +732,12 @@ void parse_ir()
 					jumpcast_counter,
 					condition_type,
 					ir[i].jump.condition);
-
 				fprintf(llvm, "br i1 %%__jumpcast__%d, label %%%s, label %%%s__false__%d\n",
 					jumpcast_counter,
 					ir[i].jump.label,
 					ir[i].jump.label,
 					jumpcast_counter);
 				fprintf(llvm, "%s__false__%d:\n", ir[i].jump.label, jumpcast_counter);
-
 				jumpcast_counter++;
 				break;
 			case TYPE_RET:

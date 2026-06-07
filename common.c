@@ -53,18 +53,13 @@ char* open_buffer(const char* source, uint *buffersize)
 		return NULL;
 	}
 
-	 ulong buffer_size = ftell(buffer_source);
-	                     rewind(buffer_source);
-
+	ulong buffer_size = ftell(buffer_source);
+	rewind(buffer_source);
 	(*buffersize) = buffer_size;
-
 	char* buffer = (char*)malloc(buffer_size + 1);
-
 	fread(buffer, 1, buffer_size, buffer_source);
 	buffer[buffer_size] = '\0';
-
 	fclose(buffer_source);
-
 	return buffer;
 }
 

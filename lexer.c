@@ -27,7 +27,6 @@ const _symbol symbol_table[] =
 {
 	{';',  SYMBOL_SEMICOLON},
 	{',',  SYMBOL_COMMA},
-	
 	{'(',  SYMBOL_LPAREN},
 	{')',  SYMBOL_RPAREN},
 	{'{',  SYMBOL_LBRACE},
@@ -37,14 +36,12 @@ const _symbol symbol_table[] =
 	{'\'', SYMBOL_SINGLE_QUOTE},
 	{'"',  SYMBOL_DOUBLE_QUOTE},
 	{'#',  KEYWORD_FUNCTION},
-	
 	{'+',  SYMBOL_PLUS},
 	{'-',  SYMBOL_MINUS},
 	{'*',  SYMBOL_MULTIPLY},
 	{'/',  SYMBOL_DIVIDE},
 	{'%',  SYMBOL_MODULO},
 	{'=',  SYMBOL_ASSIGN},
-
 	{'\\', SYMBOL_BACKSLASH},
 	{':',  KEYWORD_LABEL},
 	{'$',  SYMBOL_DOLAR},
@@ -174,7 +171,8 @@ _token_type query_keyword(const char *lexeme)
 	return IDENTIFIER;
 }
 
-void emit_token(const _token_type tt, _token_group tg, const char* value, const uint tokens_counter, const uint line_counter, uint column_counter)
+void emit_token(const _token_type tt, _token_group tg, const char* value, const uint tokens_counter,
+	const uint line_counter, uint column_counter)
 {
 	if (strlen(value) > 255)
 		lexer_error(line_counter, column_counter, IDENTIFIER_OVERFLOW);
@@ -219,7 +217,6 @@ char* convert_decimal(char* value)
 
     int result_len = snprintf(NULL, 0, "%ld", decimal);
     char* result = (char*)malloc(result_len + 1);
-    
     snprintf(result, result_len + 1, "%ld", decimal);
     return result;
 }
@@ -266,15 +263,14 @@ void scan_word(_token_type *dt, const uint i)
 	{
 		emit_token(*dt, DTYPE, lexeme_buffer, tokens_counter, line_counter, column_counter);
 		clear_buffer(lexeme_buffer, &lexeme_buffer_counter);
-
 		tokens_counter++;
 	}
 
 	if ((!_isalnum(buffer[i]) && lexeme_buffer[0] != '\0') && *dt == NON)
 	{	
-		emit_token(query_keyword(lexeme_buffer), KEYWORD, lexeme_buffer, tokens_counter, line_counter, column_counter);
+		emit_token(query_keyword(lexeme_buffer), KEYWORD, lexeme_buffer, 
+			tokens_counter, line_counter, column_counter);
 		clear_buffer(lexeme_buffer, &lexeme_buffer_counter);
-
 		tokens_counter++;
 	}
 }
@@ -291,7 +287,6 @@ void scan_operator(_token_type *lo, _token_type *ro, uint *i)
 	{
 		if (*lo == LOPERATOR_NOT) // if single char
 			operator_tmp[1] = '\0';
-
 		emit_token(*lo, LOPERATOR, operator_tmp, tokens_counter, line_counter, column_counter);
 
 		/*
@@ -301,7 +296,6 @@ void scan_operator(_token_type *lo, _token_type *ro, uint *i)
 
 		if (*lo != ROPERATOR_LESS && *lo != ROPERATOR_GREATER)
 			column_counter++;
-
 		tokens_counter++;
 	}
 
@@ -310,12 +304,10 @@ void scan_operator(_token_type *lo, _token_type *ro, uint *i)
 	{
 		if (*ro == ROPERATOR_LESS || *ro == ROPERATOR_GREATER) // if single char
 			operator_tmp[1] = '\0';
-
 		emit_token(*ro, ROPERATOR, operator_tmp, tokens_counter, line_counter, column_counter);
 
 		if (*ro != ROPERATOR_LESS && *ro != ROPERATOR_GREATER)
 			column_counter++;
-
 		tokens_counter++;
 	}
 }
@@ -329,7 +321,8 @@ void scan_symbol(_token_type *ro, _token_type *lo, const uint i)
 		if (query_symbol(buffer[i]) == SYMBOL_INVALID)
 			lexer_error(line_counter, column_counter, INVALID_CHAR);
 
-		emit_token(query_symbol(buffer[i]), SYMBOL, symbol, tokens_counter, line_counter, column_counter);
+		emit_token(query_symbol(buffer[i]), SYMBOL, symbol, 
+			tokens_counter, line_counter, column_counter);
 		tokens_counter++;
 	}
 }
@@ -362,21 +355,18 @@ void read_buffer(const char* buffer, const uint i, _buffer_mod BUFFER_MOD)
 			lexeme_buffer[lexeme_buffer_counter] = *buffer;
 		else
 			lexeme_buffer[lexeme_buffer_counter] = buffer[i];
-			
+
 		lexeme_buffer[lexeme_buffer_counter + 1] = '\0';
 		lexeme_buffer_counter++;
-
 		return;
 	}
 
 	if (_isalnum(buffer[i]) || BUFFER_MOD == READ_INTEGER_LITERAL)
 	{
 		lexemebuffer_rcontrol();
-		
 		lexeme_buffer[lexeme_buffer_counter] = buffer[i];
 		lexeme_buffer[lexeme_buffer_counter + 1] = '\0';
 		lexeme_buffer_counter++;
-
 		return;
 	}
 }
@@ -384,7 +374,6 @@ void read_buffer(const char* buffer, const uint i, _buffer_mod BUFFER_MOD)
 void update_position(const uint i)
 {
 	// Position for diagnostic
-
 	column_counter++;
 
 	if (buffer[i] == '\n')
@@ -398,7 +387,6 @@ void read_string_literal(uint *i, const uint is_charliteral)
 {
 	if (buffer_mod != READ_STRING_LITERAL)
 		return;
-
 	char delimiter = '\"';
 
 	if (is_charliteral)
@@ -415,9 +403,9 @@ void read_string_literal(uint *i, const uint is_charliteral)
 			if (is_charliteral)
 				ltmp_tt = CHAR_LITERAL;
 
-			emit_token(ltmp_tt, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
+			emit_token(ltmp_tt, LITERAL, lexeme_buffer, tokens_counter, 
+				line_counter, column_counter);
 			clear_buffer(lexeme_buffer, &lexeme_buffer_counter);
-
 			tokens_counter++;
 			buffer_mod = READ;
 		}
@@ -565,7 +553,8 @@ void read_integer_literal(uint *i)
 	if (isalpha(buffer[*i]) || strcmp(lexeme_buffer, ".") == 0)
 		lexer_error(line_counter, column_counter, IS_NOT_DECIMAL);
 
-	emit_token(INTEGER_LITERAL, LITERAL, lexeme_buffer, tokens_counter, line_counter, column_counter);
+	emit_token(INTEGER_LITERAL, LITERAL, lexeme_buffer, tokens_counter, 
+		line_counter, column_counter);
 	return;
 }
 
@@ -573,10 +562,8 @@ void lexer_main(char* sourcefile_buffer, uint sf_counter, char* sourcefile_path)
 {
 	buffer = strdup(sourcefile_buffer);
 	buffersize = sf_counter;
-
 	lexeme_buffer = malloc(lexeme_buffer_size);
 	lexeme_buffer[0] = '\0';
-
 	diagnostic_srcfile = sourcefile_path;
 
 	for (uint i = 0; i < buffersize; i++)
@@ -653,7 +640,6 @@ void lexer_main(char* sourcefile_buffer, uint sf_counter, char* sourcefile_path)
 		read_string_literal(&i, 0);
 		read_integer_literal(&i);
 		read_char_literal(&i);
-
 		buffer_mod = READ;
 
 		read_buffer(buffer, i, buffer_mod);

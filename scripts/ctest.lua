@@ -12,10 +12,9 @@ local file_write = io.open(file_convert, "w")
 local scope = 0
 
 for line in file_read:lines() do
-    --Multiple line comment
 	line = line:gsub("/~", "/*")
     line = line:gsub("~/", "*/")
-    --Single line check
+
 	if not (line:find("/%*") or line:find("%*/")) then
         line = line:gsub("~", "//")
 	end
@@ -28,18 +27,13 @@ for line in file_read:lines() do
     	end
 	end
 
-    --Jump to if (condition given)
     line = line:gsub("%f[%w]jump%s*(%b())%s*(%w+);", "if %1 goto %2;")
-    --Jump to if (no condition)
     line = line:gsub("%f[%w]jump%s+(%w+);", "goto %1;")
-    -- :mirror to mirror:
     line = line:gsub(":(%w+)", "%1:")
-    -- i[number] to int conversion
     line = line:gsub("%f[%w]i%d+%f[%W]", "int")
-
     local brace_open  = line:find("{")
     local brace_close = line:find("}")
-    --bracket check
+
     if scope == 0 and not brace_open then
 		if line:find("int") and line:find(";") and not line:find("=") then
         	line = line:gsub(";", " = 0;")

@@ -20,62 +20,62 @@ void print_tokens(uint ex)
 		exit(0);
 }
 
-	void print_expr(EXPR* e) 
-	{
-    	if (!e) 
-    		return;
+void print_expr(EXPR* e) 
+{
+    if (!e) 
+    	return;
 
-    	switch (e->type)
-    	{
-        	case NODE_INT_LITERAL: 
-            	printf("%s", e->literal); 
-            	break;
-        	case NODE_IDENTIFIER: 
-            	printf("%s", e->identifier); 
-            	break;
-        	case NODE_BINARY:
-            	printf("(");
-            	print_expr(e->binary.left);
-            	printf(" %s ", e->binary.op);
-            	print_expr(e->binary.right);
-            	printf(")");
-            	break;
-        	case NODE_UNARY:
-            	printf("(%s", e->unary.op);
-            	print_expr(e->unary.value);
-            	printf(")");
-            	break;
-            case NODE_CALL:
-            	printf("(");
-            	printf("call>%s ", e->call.callee);
-            	
-            	for (uint i = 0; i < e->call.argc; i++)
-            	{
-            		print_expr(e->call.args[i]);
+    switch (e->type)
+    {
+        case NODE_INT_LITERAL: 
+            printf("%s", e->literal); 
+            break;
+        case NODE_IDENTIFIER: 
+            printf("%s", e->identifier); 
+            break;
+        case NODE_BINARY:
+            printf("(");
+            print_expr(e->binary.left);
+            printf(" %s ", e->binary.op);
+            print_expr(e->binary.right);
+            printf(")");
+            break;
+        case NODE_UNARY:
+            printf("(%s", e->unary.op);
+            print_expr(e->unary.value);
+            printf(")");
+            break;
+		case NODE_CALL:
+            printf("(");
+            printf("call>%s ", e->call.callee);
+	
+            for (uint i = 0; i < e->call.argc; i++)
+            {
+            	print_expr(e->call.args[i]);
 
-            		if (i + 1 != e->call.argc)
-            			printf(",");
-            	}
+            	if (i + 1 != e->call.argc)
+            		printf(",");
+            }
 
-            	printf(")");
-            	break;
-            case NODE_ARRAY:
-            	printf("(");
-            	printf("dim>%s ", e->array.name);
+            printf(")");
+            break;
+		case NODE_ARRAY:
+            printf("(");
+            printf("dim>%s ", e->array.name);
 
-            	for (uint i = 0; i < e->array.dimc; i++)
-            	{
-            		print_expr(e->array.dims[i]);
+            for (uint i = 0; i < e->array.dimc; i++)
+            {
+            	print_expr(e->array.dims[i]);
 
-            		if (i + 1 != e->array.dimc)
-            			printf(", ");
-            	}
+            	if (i + 1 != e->array.dimc)
+            		printf(", ");
+            }
 
-            	printf(")");
-            	break;
-        	default:
-    	}
-	}
+            printf(")");
+            break;
+        default:
+    }
+}
 
 void print_ast(uint ex)
 {
@@ -129,6 +129,7 @@ void print_ast(uint ex)
 					if (c + 1 != ast[i].var.dimc)
 						printf(", ");
 				}
+
 				printf(")\n");
 				break;
 			case UVAR:
@@ -148,6 +149,7 @@ void print_ast(uint ex)
 					if (c + 1 != ast[i].var.dimc)
 						printf(", ");
 				}
+
 				printf(")\n");
 				break;
 			case PARSE_ASSIGNMENT:
@@ -164,6 +166,7 @@ void print_ast(uint ex)
 					if (c + 1 != ast[i].assignment.dimc) 
 						printf(", ");
 				}
+
 				printf(")\n");
 				break;
 			case JUMPER:
@@ -188,7 +191,6 @@ void print_ast(uint ex)
 
 		printf("	->SCOPE; %s \n", ast[i].scope);
 	}
-
 	printf("AST COUNTER; %d\n\n", ast_counter);
 
 	if (ex)

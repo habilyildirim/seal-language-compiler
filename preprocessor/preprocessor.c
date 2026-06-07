@@ -43,7 +43,6 @@ char* middle;
 char* bottom;
 
 uint middle_size = 128;
-
 uint topbuffer_size = 128;
 uint middlebuffer_size = 128;
 uint bottombuffer_size = 128;
@@ -55,11 +54,10 @@ char* include_handler(char* rf, uint rf_counter, uint i)
 {
     char* for_top = malloc(128);
     uint c = 0;
-
     char* for_middle = malloc(middlebuffer_size);
     uint d = 0;
-
     i++;
+
     for (;i < rf_counter && rf[i] != '"'; i++)
     {
         if (rf[i] == ' ')
@@ -77,8 +75,8 @@ char* include_handler(char* rf, uint rf_counter, uint i)
 
     for_top[c] = rf[i];
 	c++;
-
     i++;
+
     for (;i < rf_counter && rf[i] != '"'; i++)
     {
         if ((c + 1) % 128 == 0)
@@ -105,7 +103,6 @@ char* include_handler(char* rf, uint rf_counter, uint i)
     c++;
     for_top[c] = '\0';
 	for_middle[d] = '\0';
-
     middle = open_buffer(for_middle, &middle_size);
 
 	if (middle == NULL) 
@@ -220,7 +217,6 @@ void pass_scan(char chr, char* str)
 void analyzer(char* converted)
 {
 	root_file = open_buffer(converted, &rf_counter);
-
 	char* prep_buffer = malloc(128);
 	uint pb_size = 0;
 
@@ -265,19 +261,14 @@ void analyzer(char* converted)
 
 	        sync_top(result, &i);
 	        get_bottom(root_file, i, rf_counter);
-
 	        char* tmp_root = strdup(top);
 	        size_t new_size = strlen(tmp_root) + strlen(middle) + strlen(bottom) + 1;
-
 	        char* resized = realloc(tmp_root, new_size);
 	        tmp_root = resized;
-
 	        strcat(tmp_root, middle);
 	        strcat(tmp_root, bottom);
-
 	        root_file = tmp_root;
 	        rf_counter = strlen(root_file);
-
 	        clear_posstrg();
 	        pb_size = 0;
 	    }
@@ -329,7 +320,6 @@ void diagnostic_marker(char* rf_path)
 				printf("%d", layer[layer_point].line);
 				prep_error(rf_path, layer[layer_point].line, dpb_counter, END_SYMBOL_WRONG);
 			}
-
 			layer_point--;
 
 			if (layer_point == 0)

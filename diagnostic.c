@@ -146,11 +146,10 @@ void lexer_error(const uint line, const uint column, const LEXER_LAYER_ERROR_TYP
 	printf("lexer-error~>");
 	print_lines(diagnostic_mark, line);
 	printf(":%d\n", column);
-
 	print_lines(NULL, line);
+
 	if (line == 1)
 		printf("\n");
-
 	print_caret(column);
 
 	switch (ERROR_TYPE)
@@ -187,11 +186,10 @@ void parser_error(const uint line, const uint column, const PARSER_LAYER_ERROR_T
 	printf("parser-error~>");
 	print_lines(diagnostic_mark, line);
 	printf(":%d\n", column);
-
 	print_lines(NULL, line);
+
 	if (line == 1)
 		printf("\n");
-		
 	print_caret(column);
 
 	switch (ERROR_TYPE)
@@ -248,7 +246,7 @@ void parser_error(const uint line, const uint column, const PARSER_LAYER_ERROR_T
 }
 
 void semantic_error(const char* source_file, const uint line, const uint column, const char* scope, const uint scpline,
-					const uint scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
+	const uint scpcolumn, const char* argument, const SEMANTIC_LAYER_ERROR_TYPE ERROR_TYPE)
 {
 	printf("semantic-error->");
 	print_lines(diagnostic_mark, line);
@@ -305,11 +303,10 @@ void codegen_error(const uint line, const uint column, const CODEGEN_LAYER_ERROR
 	printf("codegen-error~>");
 	print_lines(diagnostic_mark, line);
 	printf(":%d\n", column);
-
 	print_lines(NULL, line);
+
 	if (line == 1)
 		printf("\n");
-		
 	print_caret(column);
 
 	switch (ERROR_TYPE)
