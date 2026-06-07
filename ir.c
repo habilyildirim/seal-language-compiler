@@ -42,7 +42,7 @@ void emit_ret(char* type, char* value)
 }
 
 void emit_tmp_singleop(OP_TYPE optype, char* type, char* name, char* left, char* right, 
-	char* oper, bool lo_key, bool global_key)
+	char* size, char* oper, bool lo_key, bool global_key)
 {
 	char* left_val = NULL;
 	if (left != NULL && is_arg(left))
@@ -64,6 +64,7 @@ void emit_tmp_singleop(OP_TYPE optype, char* type, char* name, char* left, char*
 	ir[ir_counter].tmp.name = name;
 	ir[ir_counter].tmp.left = left_val;
 	ir[ir_counter].tmp.lo_key = lo_key;
+	ir[ir_counter].tmp.size = size;
 
 	if (right != NULL)
 		ir[ir_counter].tmp.right = right_val;
@@ -116,12 +117,13 @@ void emit_call(char* tmp, char* callee, char* type, arg* args, uint argc)
 	ir_counter++;
 }
 
-void emit_alloc(char* var_name, char* type, bool global_key)
+void emit_alloc(char* var_name, char* type, bool global_key, char* size)
 {
 	ir = realloc(ir, sizeof(IR) * (ir_counter + 1));
 	ir[ir_counter].type = TYPE_ALLOCATE;
 	ir[ir_counter].allocate.var_name = var_name;
 	ir[ir_counter].allocate.type = type;
+	ir[ir_counter].allocate.size = size;
 	
 	if (global_key)
 		ir[ir_counter].scope = "global";
@@ -155,20 +157,21 @@ void emit_jumper(char* condition, char* label)
 	ir_counter++;
 }
 
-void emit_store(char* var_name, char* type, char* value, bool global_key, bool arg_key)
+void emit_store(char* var_name, char* type, char* value, char* size, bool global_key, bool arg_key)
 {
 	char* val = NULL;
 	if (is_arg(var_name))
 		asprintf(&val, "%s__addr__", var_name);
 	else
 		val = var_name;
-
+		
 	ir = realloc(ir, sizeof(IR) * (ir_counter + 1));
 	ir[ir_counter].type = TYPE_STORE;
 	ir[ir_counter].store.var_name = val;
 	ir[ir_counter].store.type = type;
 	ir[ir_counter].store.value = value;
 	ir[ir_counter].store.arg_key = arg_key;
+	ir[ir_counter].store.size = size;
 
 	if (global_key)
 		ir[ir_counter].scope = "global";
@@ -255,6 +258,15 @@ char* type_control(const char* str)
 	return "i64";
 }
 
+typedef struct
+{
+	char* name;
+	EXPR** dims;
+	uint dimc; 
+}
+array;
+char* use_array(array ary);
+
 FILE* ir_source;
 char* expr(EXPR* e)
 {
@@ -277,19 +289,19 @@ char* expr(EXPR* e)
 						fprintf(ir_source, " %s %s", ir[ir_counter - 1].tmp.type, 
 							e->literal);
 						emit_tmp_singleop(OP_CONST, ir[ir_counter - 1].tmp.type,
-							result_literal, e->literal, NULL, NULL, 0, 0);
+							result_literal, e->literal, NULL, NULL, NULL, 0, 0);
 						break;
 					case TYPE_ALLOCATE:
 						fprintf(ir_source, " %s %s", ir[ir_counter - 1].allocate.type, 
 							e->literal);
 						emit_tmp_singleop(OP_CONST, ir[ir_counter - 1].allocate.type,
-							result_literal, e->literal, NULL, NULL, 0, 0);
+							result_literal, e->literal, NULL, NULL, NULL, 0, 0);
 						break;
 					case TYPE_STORE:
 						fprintf(ir_source, " %s %s", ir[ir_counter - 1].store.type, 
 							e->literal);
 						emit_tmp_singleop(OP_CONST, ir[ir_counter - 1].store.type,
-							result_literal, e->literal, NULL, NULL, 0, 0);
+							result_literal, e->literal, NULL, NULL, NULL, 0, 0);
 						break;
 					default:
 				}
@@ -298,11 +310,33 @@ char* expr(EXPR* e)
 			{
 				fprintf(ir_source, " %s i64\n", e->literal);
 				emit_tmp_singleop(OP_CONST, "i64", result_literal, 
-					e->literal, NULL, NULL, 0, 0);
+					e->literal, NULL, NULL, NULL, 0, 0);
 			}
 
 			tmp_counter++;
 			return result_literal;
+		}
+
+		case NODE_ARRAY:
+		{
+			array current;
+			current.name = e->array.name;
+			current.dims = e->array.dims;
+			current.dimc = e->array.dimc;
+			char* size = use_array(current);
+
+			char* result_identifier = NULL;
+			asprintf(&result_identifier, "t%d", tmp_counter);
+			char* type = get_vartype(e->array.name);
+
+			fprintf(ir_source, "tmp t%d load %s %s\n", 
+				tmp_counter, type, e->array.name);
+
+			emit_tmp_singleop(OP_LOAD, type, result_identifier,
+				e->identifier, NULL, size, "load", 0, 0);
+
+			tmp_counter++;
+			return result_identifier;
 		}
 
 		case NODE_IDENTIFIER:
@@ -316,14 +350,14 @@ char* expr(EXPR* e)
 				fprintf(ir_source, "tmp t%d load %s @%s\n",
 					tmp_counter, type, e->identifier);
 				emit_tmp_singleop(OP_LOAD, type, result_identifier, 
-					e->identifier, NULL, "load", 0, 1);
+					e->identifier, NULL, NULL, "load", 0, 1);
 			}
 			else
 			{
 				fprintf(ir_source, "tmp t%d load %s %s\n", 
 					tmp_counter, type, e->identifier);
-				emit_tmp_singleop(OP_LOAD, type, result_identifier, 
-					e->identifier, NULL, "load", 0, 0);
+				emit_tmp_singleop(OP_LOAD, type, result_identifier,
+					e->identifier, NULL, NULL, "load", 0, 0);
 			}
 
 			tmp_counter++;
@@ -438,7 +472,7 @@ char* expr(EXPR* e)
 			fprintf(ir_source, " %s\n", right);
 
 			emit_tmp_singleop(_oper, type, result_binary,
-				left, right, oper, lo_key, 0);
+				left, right, NULL, oper, lo_key, 0);
 
 			tmp_counter++;
 			return result_binary;
@@ -453,7 +487,7 @@ char* expr(EXPR* e)
 			fprintf(ir_source, "tmp t%d neg %s\n", tmp_counter, unary_value);
 
 			emit_tmp_singleop(OP_NEG, ir[ir_counter - 1].tmp.type, result_unary, 
-				NULL, unary_value, NULL, 0, 0);
+				NULL, unary_value, NULL, NULL, 0, 0);
 
 			tmp_counter++;
 			return result_unary;
@@ -467,7 +501,7 @@ char* expr(EXPR* e)
 			asprintf(&result_not, "t%d", tmp_counter);
 
 			emit_tmp_singleop(OP_NOT, ir[ir_counter - 1].tmp.type, result_not,
-				not_value, NULL, NULL, 0, 0);
+				not_value, NULL, NULL, NULL, 0, 0);
 
 			fprintf(ir_source, "tmp %s not %s %s\n", result_not, 
 				ir[ir_counter - 1].tmp.type,
@@ -505,6 +539,57 @@ char* expr(EXPR* e)
 	}
 
 	return NULL;
+}
+
+char* use_array(array ary)
+{
+	uint index_counter = 1;
+	char* size = NULL;
+
+	for (uint c = 0; c != ary.dimc; c++)
+	{
+		char* current = expr(ary.dims[c]);
+
+		if (ary.dimc == 1)
+			return current;
+
+		char* dim_value = NULL;
+		char* tdim = NULL;
+		asprintf(&tdim, "t%d", tmp_counter);
+		tmp_counter++;
+
+		if (c == 0)
+		{
+			asprintf(&dim_value, "t%s_%d", ary.name, index_counter);
+			index_counter++;
+
+			emit_tmp_singleop(OP_MUL, "i64", tdim,
+				dim_value, current, NULL, "mul", 0, 0);
+		}
+		else
+		{
+			emit_tmp_singleop(OP_ADD, "i64", tdim,
+				size, current, NULL, "add", 0, 0);
+
+			if (c == ary.dimc - 1)
+			{
+				size = tdim;
+				return size;
+			}
+
+			asprintf(&dim_value, "t%s_%d", ary.name, index_counter);
+			index_counter++;
+			asprintf(&tdim, "t%d", tmp_counter);
+			tmp_counter++;
+
+			emit_tmp_singleop(OP_MUL, "i64", tdim, ir[ir_counter - 1].tmp.name, 
+				dim_value, NULL, "mul", 0, 0);
+		}
+
+		size = tdim;
+	}
+
+	return size;
 }
 
 void ir_main()
@@ -568,12 +653,12 @@ void ir_main()
 				{
 					fprintf(ir_source, "alloc %s %s\n", arg_addr.func.args[c].name,
 						arg_addr.func.args[c].type);
-					emit_alloc(arg_addr.func.args[c].name, arg_addr.func.args[c].type, 0);
+					emit_alloc(arg_addr.func.args[c].name, arg_addr.func.args[c].type, 0, NULL);
 
 					fprintf(ir_source, "store %s %s %s\n", arg_addr.func.args[c].name,
 						arg_addr.func.args[c].type, ast[i].function.args[c].name);
 					emit_store(arg_addr.func.args[c].name, arg_addr.func.args[c].type, 
-						ast[i].function.args[c].name, 0, 1);
+						ast[i].function.args[c].name, NULL, 0, 1);
 				}
 
 				break;
@@ -618,14 +703,41 @@ void ir_main()
 				if (strcmp(ast[i].scope, "global") == 0)
 				{
 					fprintf(ir_source, "alloc %s %s\n", ast[i].var.name, ast[i].var.type);
-					emit_alloc(ast[i].var.name, ast[i].var.type, 1);
+					emit_alloc(ast[i].var.name, ast[i].var.type, 1, NULL);
 					break;
 				}
-				fprintf(ir_source, "alloc %s %s\n", ast[i].var.name, ast[i].var.type);
-				emit_alloc(ast[i].var.name, ast[i].var.type, 0);
 
+				char* tmp_dim = NULL;
+				for (uint c = 0; ast[i].var.dim_key && c != ast[i].var.dimc; c++)
+				{
+					char* current = expr(ast[i].var.dims[c]);
+
+					char* dim_value = NULL;
+					asprintf(&dim_value, "t%s_%d", ast[i].var.name, c);
+					emit_tmp_singleop(OP_CONST, ast[i].var.type, dim_value,
+						current, NULL, NULL, NULL, 0, 0);
+
+					if (!c)
+					{
+						tmp_dim = current;
+						continue;
+					}
+
+					char* tdim = NULL;
+					asprintf(&tdim, "t%d", tmp_counter);
+					tmp_counter++;
+
+					// ast[i].var.type
+					emit_tmp_singleop(OP_MUL, "i64", tdim,
+						tmp_dim, current, NULL, "mul", 0, 0);
+
+					tmp_dim = tdim;
+				}
+
+				fprintf(ir_source, "alloc %s %s size %s\n", ast[i].var.name, ast[i].var.type, tmp_dim);
+				emit_alloc(ast[i].var.name, ast[i].var.type, 0, tmp_dim);
 				char* result = expr(ast[i].var.value);
-				emit_store(ast[i].var.name, ast[i].var.type, result, 0, 0);
+				emit_store(ast[i].var.name, ast[i].var.type, result, NULL, 0, 0);
 
 				fprintf(ir_source, "store %s %s %s\n", ast[i].var.name, ast[i].var.type, result);
 				break;
@@ -634,18 +746,32 @@ void ir_main()
 			case PARSE_ASSIGNMENT:
 			{
 				char* result = expr(ast[i].assignment.value);
-				if (is_local(ast[i].assignment.name) == 0)
+
+				if (!is_local(ast[i].assignment.name))
 				{
 					fprintf(ir_source, "store @%s %s %s\n", ast[i].assignment.name,
 						ast[i].assignment.type, result);
-					emit_store(ast[i].assignment.name, ast[i].assignment.type, result, 1, 0);
+					emit_store(ast[i].assignment.name, ast[i].assignment.type, result, NULL, 1, 0);
+					break;
+				}
+
+				if (ast[i].assignment.dim_key)
+				{
+					array current;
+					current.name = ast[i].assignment.name;
+					current.dims = ast[i].assignment.dims;
+					current.dimc = ast[i].assignment.dimc;
+					char* size = use_array(current);
+
+					fprintf(ir_source, "store %s %s %%%s\n", ast[i].assignment.name,
+						ast[i].assignment.type, result);
+					emit_store(ast[i].assignment.name, ast[i].assignment.type, result, size, 0, 0);
 					break;
 				}
 
 				fprintf(ir_source, "store %s %s %%%s\n", ast[i].assignment.name,
 					ast[i].assignment.type, result);
-
-				emit_store(ast[i].assignment.name, ast[i].assignment.type, result, 0, 0);
+				emit_store(ast[i].assignment.name, ast[i].assignment.type, result, NULL, 0, 0);
 				break;
 			}
 

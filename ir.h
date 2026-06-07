@@ -8,6 +8,7 @@ typedef enum
 	TYPE_FUNC,
 	TYPE_ALLOCATE,
 	TYPE_STORE,
+	TYPE_POINTER,
 	TYPE_JUMP,
 	TYPE_LABEL,
 	TYPE_RET,
@@ -62,6 +63,7 @@ typedef struct
 			char* left;
 			char* right;
 			bool lo_key;
+			char* size;
 
 			// for call node
 			char* callee;
@@ -83,6 +85,7 @@ typedef struct
 		{
 			char* var_name;
 			char* type;
+			char* size;
 		}
 		allocate;
 
@@ -91,6 +94,7 @@ typedef struct
 			char* var_name;
 			char* type;
 			char* value;
+			char* size;
 			bool arg_key;
 		}
 		store;

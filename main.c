@@ -97,8 +97,8 @@ int main(int argc, char *argv[])
 	parse_arg(argc, argv, &sourcefile_path, &output_name);
 
 	pp_main(&sourcefile_path);
-	lexer_main(root_file, rf_counter, sourcefile_path);
-	parser_main();
+	lexer_main(root_file, rf_counter, sourcefile_path); 
+	parser_main(); //print_ast(1);
 	semantic_main();
 	ir_main(sourcefile_path);
 	codegen_main(output_name);

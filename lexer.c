@@ -50,7 +50,6 @@ const _symbol symbol_table[] =
 	{'$',  SYMBOL_DOLAR},
 	{'@',  END_INCFILE}
 };
-
 #define SYMBOL_TABLE_LENGTH 21
 
 const _loperator logical_operator_table[] =
@@ -59,7 +58,6 @@ const _loperator logical_operator_table[] =
 	{"||", LOPERATOR_OR},
 	{"!",  LOPERATOR_NOT},
 };
-
 #define LOGICAL_OPERATOR_TABLE_LENGTH 3
 
 const _roperator relational_operator_table[] =
@@ -71,7 +69,6 @@ const _roperator relational_operator_table[] =
 	{"<",  ROPERATOR_LESS},
 	{">",  ROPERATOR_GREATER},
 };
-
 #define RELATIONAL_OPERATOR_TABLE_LENGTH 6
 
 const _data_type data_type_table[] =
@@ -86,7 +83,6 @@ const _data_type data_type_table[] =
 	{"double",    DTYPE_DOUBLE},
 	{"char",      DTYPE_CHAR},
 };
-
 #define DATA_TYPE_TABLE_LENGTH 9
 
 const _keyword keyword_table[] =
@@ -95,10 +91,8 @@ const _keyword keyword_table[] =
 	{"DEFINE",   KEYWORD_MACRO},
 	{"return",   KEYWORD_RETURN},
 	{"jump",     KEYWORD_JUMPER},
-	{"unsigned", KEYWORD_UNSIGNED},
 };
-
-#define KEYWORD_TABLE_LENGTH 5
+#define KEYWORD_TABLE_LENGTH 4
 
 /* ======================================== TOOLS ======================================== */
 

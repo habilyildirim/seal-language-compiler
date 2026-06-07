@@ -1,32 +1,11 @@
-# i32 level_3_multiplier(i32 val)
+#
+i32 main()
 {
-    i32 doubled = val + val;
-    return doubled;
-}
+	i8 a[3, 7] = 0;
+	a[3, 2] = 12;
 
-# i32 level_2_loop(i32 start, i32 target)
-{
-    :nested_loop
-        start = level_3_multiplier(start);
-        i1 cond = (start < target);
-    jump (cond == 1) nested_loop;
+	i16 w[3] = 0;
+	w[2] = a[3, 2];
 
-    return start;
-}
-
-# i32 level_1_processor(i32 base)
-{
-    i32 limit = 40;
-    i32 processing_res = level_2_loop(base, limit);
-
-    return processing_res;
-}
-
-# i32 main()
-{
-    i32 initial_value = 3;
-    i32 final_result = level_1_processor(initial_value);
-    i1 is_correct = (final_result == 48);
-
-    return is_correct;
+	return w[2];
 }

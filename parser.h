@@ -1,6 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef enum 
 {
@@ -10,6 +11,7 @@ typedef enum
 	NODE_UNARY,
 	NODE_NOT,
 	NODE_CALL,
+	NODE_ARRAY,
 }
 _node_type;
 
@@ -60,6 +62,14 @@ typedef struct EXPR
             uint argc;
         }
         call;
+
+        struct
+        {
+            char* name;
+            struct EXPR** dims;
+            uint dimc;
+        }
+        array;
     };
 }
 EXPR;
@@ -137,6 +147,10 @@ typedef struct
 			char* type;
 			char* name;
 			struct EXPR* value;
+
+			bool dim_key;
+			struct EXPR** dims;
+			uint dimc;
 		}
 		var;
 
@@ -145,6 +159,10 @@ typedef struct
 			char* type;
 			char* name;
 			struct EXPR* value;
+
+			bool dim_key;
+			struct EXPR** dims;
+			uint dimc;
 		}
 		assignment;
 	};

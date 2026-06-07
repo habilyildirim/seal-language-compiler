@@ -108,7 +108,8 @@ EXPR* parse_primary(uint *i)
         node->type = NODE_IDENTIFIER;
         node->identifier = strdup(tok.value);
         (*i)++;
-        
+
+        // Call expression
     	if (*i < tokens_counter && tokens[*i].token_type == SYMBOL_LPAREN)
     	{
         	(*i)++;
@@ -121,10 +122,10 @@ EXPR* parse_primary(uint *i)
             	args = realloc(args, sizeof(EXPR*) * (arg_count + 1));
             	args[arg_count++] = parse_expression(i, 0);
 
-           		if (tokens[*i].token_type == SYMBOL_COMMA)
-                	(*i)++;
-            	else
-        			break;
+           		if (tokens[*i].token_type != SYMBOL_COMMA)
+                	break;
+
+        		(*i)++;
         	}
 
         	if (tokens[*i].token_type != SYMBOL_RPAREN)
@@ -139,6 +140,41 @@ EXPR* parse_primary(uint *i)
         	node->call.callee = strdup(tok.value);
         	node->call.args = args;
         	node->call.argc = arg_count;
+
+        	return node;
+    	}
+
+		// Array expression
+    	if (*i < tokens_counter && tokens[*i].token_type == SYMBOL_LBRACKET)
+    	{
+        	(*i)++;
+
+        	EXPR** dims = NULL;
+        	int dim_count = 0;
+
+        	while (*i < tokens_counter && tokens[*i].token_type != SYMBOL_LBRACKET)
+        	{
+            	dims = realloc(dims, sizeof(EXPR*) * (dim_count + 1));
+            	dims[dim_count++] = parse_expression(i, 0);
+
+           		if (tokens[*i].token_type != SYMBOL_COMMA)
+                	break;
+
+        		(*i)++;
+        	}
+
+        	if (tokens[*i].token_type != SYMBOL_RBRACKET)
+        		parser_error(tokens[*i - 1].line, tokens[*i - 1].column, WRONG_EXPRESSION);
+
+        	(*i)++;
+
+        	EXPR* node = malloc(sizeof(EXPR));
+        	memset(node, 0, sizeof(EXPR));
+
+        	node->type = NODE_ARRAY;
+        	node->array.name = strdup(tok.value);
+        	node->array.dims = dims;
+        	node->array.dimc = dim_count;
 
         	return node;
     	}
@@ -280,55 +316,12 @@ AST parse_macro(uint *i, uint c)
 	return result;
 }
 
-AST parse_var(uint *i, uint is_unsigned, uint c)
+AST parse_var(uint *i, uint c)
 {
 	AST result;
-	
 	result.type = VAR;
 	result.seq = c;
-	
-	if (is_unsigned)
-	{
-		result.type = UVAR;
-		(*i)++;
 
-		if (tokens[*i].token_group != DTYPE)
-			parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR);
-
-		overflow_control(*i, MISSING_ARG);
-		char* us_type = malloc(strlen("unsigned ") + strlen(tokens[*i + 2].value) + 1);
-
-		strcpy(us_type, "unsigned ");
-		strcat(us_type, tokens[*i].value);
-		result.var.type = us_type;
-		(*i)++;
-
-		if (tokens[*i].token_group != _IDENTIFIER)
-			parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_UVAR);
-
-		result.var.name = tokens[*i].value;
-		(*i)++;
-
-		if (tokens[*i].token_type == SYMBOL_ASSIGN)
-		{
-			(*i)++;
-			result.var.value = parse_expression(&(*i), 0);
-
-			overflow_control(*i, MISSING_SEMICOLON);
-
-			if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-				parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
-
-			return result;
-		}
-
-		result.var.value = NULL;
-		if (tokens[*i].token_type != SYMBOL_SEMICOLON)
-			parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
-	
-		return result;
-	}
-	
 	result.var.type = tokens[*i].value;
 	(*i)++;
 	
@@ -338,10 +331,34 @@ AST parse_var(uint *i, uint is_unsigned, uint c)
 	result.var.name = tokens[*i].value;
 	(*i)++;
 	
+	if (tokens[*i].token_type == SYMBOL_LBRACKET)
+	{
+		EXPR** dims = NULL;
+		(*i)++;
+		int dim_count = 0;
+
+		for (;(*i) < tokens_counter; (*i)++)
+		{
+			dims = realloc(dims, sizeof(EXPR*) * (dim_count + 1));
+			dims[dim_count++] = parse_expression(&(*i), 0);
+
+			if (tokens[*i].token_type != SYMBOL_COMMA)
+				break;
+		}
+
+		if (tokens[*i].token_type != SYMBOL_RBRACKET)
+			parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_VAR);
+
+		result.var.dimc = dim_count;
+		result.var.dim_key = 1;
+		result.var.dims = dims;
+		(*i)++;
+	}
+
 	if (tokens[*i].token_type == SYMBOL_ASSIGN)
 	{
 		(*i)++;
-		
+
 		result.var.value = parse_expression(&(*i), 0);
 		overflow_control(*i, MISSING_SEMICOLON);
 
@@ -350,10 +367,9 @@ AST parse_var(uint *i, uint is_unsigned, uint c)
 
 		return result;
 	}
-
 	overflow_control(*i, MISSING_SEMICOLON);
-
 	result.var.value = NULL;
+
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
 		parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
@@ -366,22 +382,10 @@ AST parse_assignment(uint *i, uint c)
 	
 	result.type = PARSE_ASSIGNMENT;
 	result.seq = c;
-
-	/*	
-		   i=0     1      2
-		identifier = expression;
-		         ^      (i+=2)
-		         |
-			     assignment->name	
-	*/
-
-	result.assignment.name = tokens[*i].value;
-	
-	(*i)+=2;
+	result.assignment.name = NULL;
 	result.assignment.value = parse_expression(&(*i), 0);
-	
 	overflow_control(*i, MISSING_SEMICOLON);
-	
+
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
 		parser_error(tokens[*i].line, tokens[*i].column, MISSING_SEMICOLON);
 
@@ -423,7 +427,6 @@ AST parse_return(uint *i, uint c)
 
 	(*i)++;
 	result._return.value = parse_expression(&(*i), 0);
-
 	overflow_control(*i, MISSING_SEMICOLON);
 
 	if (tokens[*i].token_type != SYMBOL_SEMICOLON)
@@ -499,14 +502,12 @@ AST parse_function(uint *i, uint c)
 	result.seq = c;
 
 	(*i)++;
-
 	if (tokens[*i].token_group != DTYPE)
 		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
 	result.function.type = tokens[*i].value;
 
 	(*i)++;
-
 	if (tokens[*i].token_type != IDENTIFIER)
 		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
@@ -514,7 +515,6 @@ AST parse_function(uint *i, uint c)
 	scope = strdup(tokens[*i].value);
 
 	(*i)++;
-
 	if (tokens[*i].token_type != SYMBOL_LPAREN)
 		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
 
@@ -559,7 +559,7 @@ AST parse_function(uint *i, uint c)
 
 	if (tokens[*i].token_type != SYMBOL_LBRACE)
 		parser_error(tokens[*i].line, tokens[*i].column, UNEXPECTED_FUNCTION);
-
+		
 	return result;
 }
 
@@ -586,7 +586,9 @@ void parser_main()
 
 		if (tokens[i].token_group == DTYPE)
 		{
-			ast[ast_counter] = parse_var(&i, 0, ast_counter);
+			// i32 a[12];
+			
+			ast[ast_counter] = parse_var(&i, ast_counter);
 			ast[ast_counter].scope = strdup(scope);
 			ast[ast_counter].line = tmp_line;
 			ast[ast_counter].column = tmp_column;
@@ -600,10 +602,55 @@ void parser_main()
 
 		/* PARSE IDENTIFIER ASSIGNMENT */
 
-		overflow_control(i, MISSING_ARG);
-		if (tokens[i].token_type == IDENTIFIER && tokens[i + 1].token_type == SYMBOL_ASSIGN)
+		//overflow_control(i, MISSING_ARG);
+		if (tokens[i].token_type == IDENTIFIER && 
+			(tokens[i + 1].token_type == SYMBOL_ASSIGN || tokens[i + 1].token_type == SYMBOL_LBRACKET))
 		{
+			char* var_name = tokens[i].value;
+			EXPR** dims = NULL;
+			uint dim_count = 0;
+			bool dim_key = 0;
+
+			if (tokens[i + 1].token_type == SYMBOL_LBRACKET)
+			{
+				/*
+					n[array_dims] = expression;
+					  ^
+					  |- i+2
+				*/
+				i+=2;
+
+				while (i < tokens_counter && tokens[i].token_type != SYMBOL_LBRACKET)
+				{
+            		dims = realloc(dims, sizeof(EXPR*) * (dim_count + 1));
+            		dims[dim_count++] = parse_expression(&i, 0);
+
+           			if (tokens[i].token_type != SYMBOL_COMMA)
+                		break;
+
+					i++;
+				}
+
+				if (tokens[i].token_type != SYMBOL_RBRACKET)
+					parser_error(tokens[i - 1].line, tokens[i - 1].column, WRONG_EXPRESSION);
+				if (tokens[i + 1].token_type != SYMBOL_ASSIGN)
+					break;
+				
+				i++;
+				dim_key = 1;
+			}
+			else 
+				i++;
+
+			if (tokens[i].token_type != SYMBOL_ASSIGN)
+				break;
+			i++;
+
 			ast[ast_counter] = parse_assignment(&i, ast_counter);
+			ast[ast_counter].assignment.name = var_name;
+			ast[ast_counter].assignment.dim_key = dim_key;
+			ast[ast_counter].assignment.dims = dims;
+			ast[ast_counter].assignment.dimc = dim_count;
 			ast[ast_counter].scope = strdup(scope);
 			ast[ast_counter].line = tokens[i].line;
 			ast[ast_counter].column = tokens[i].column;
@@ -647,15 +694,6 @@ void parser_main()
 				break;
 			case KEYWORD_MACRO:
 				ast[ast_counter] = parse_macro(&i, ast_counter);
-				ast[ast_counter].scope = strdup(scope);
-				ast[ast_counter].line = tokens[i].line;
-				ast[ast_counter].column = tokens[i].column;
-				ast[ast_counter].scpline = scope_line;
-				ast[ast_counter].scpcolumn = scope_column;
-				ast_counter++;
-				break;
-			case KEYWORD_UNSIGNED:
-				ast[ast_counter] = parse_var(&i, 1, ast_counter);
 				ast[ast_counter].scope = strdup(scope);
 				ast[ast_counter].line = tokens[i].line;
 				ast[ast_counter].column = tokens[i].column;

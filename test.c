@@ -52,9 +52,25 @@ void print_tokens(uint ex)
             	for (uint i = 0; i < e->call.argc; i++)
             	{
             		print_expr(e->call.args[i]);
-            		printf("<");
+
+            		if (i + 1 != e->call.argc)
+            			printf(",");
             	}
-            	
+
+            	printf(")");
+            	break;
+            case NODE_ARRAY:
+            	printf("(");
+            	printf("dim>%s ", e->array.name);
+
+            	for (uint i = 0; i < e->array.dimc; i++)
+            	{
+            		print_expr(e->array.dims[i]);
+
+            		if (i + 1 != e->array.dimc)
+            			printf(", ");
+            	}
+
             	printf(")");
             	break;
         	default:
@@ -105,7 +121,15 @@ void print_ast(uint ex)
 				if(ast[i].var.value != NULL)
 					print_expr(ast[i].var.value);
 
-				printf("\n");
+				printf("\n	->DIMS; (");
+				for (uint c = 0; c < ast[i].var.dimc; c++)
+				{
+					print_expr(ast[i].var.dims[c]);
+
+					if (c + 1 != ast[i].var.dimc)
+						printf(", ");
+				}
+				printf(")\n");
 				break;
 			case UVAR:
 				printf("AST %d - UNSIGNED VARIABLE \n", i);
@@ -116,14 +140,31 @@ void print_ast(uint ex)
 				if(ast[i].var.value != NULL)
 					print_expr(ast[i].var.value);
 
-				printf("\n");
+				printf("\n	->DIMS; (");
+				for (uint c = 0; c < ast[i].var.dimc; c++)
+				{
+					print_expr(ast[i].var.dims[c]);
+
+					if (c + 1 != ast[i].var.dimc)
+						printf(", ");
+				}
+				printf(")\n");
 				break;
 			case PARSE_ASSIGNMENT:
 				printf("AST %d - ASSIGNMENT \n", i);
 				printf("	->VAR TYPE; %s\n", ast[i].assignment.name);
-				printf("	->VAR VALUE; "); 
+				printf("	->VAR VALUE; ");
 				print_expr(ast[i].assignment.value);
-				printf("\n");
+
+				printf("\n	->DIMS; (");
+				for (uint c = 0; c < ast[i].assignment.dimc; c++)
+				{
+					print_expr(ast[i].assignment.dims[c]);
+
+					if (c + 1 != ast[i].assignment.dimc) 
+						printf(", ");
+				}
+				printf(")\n");
 				break;
 			case JUMPER:
 				printf("AST %d - JUMPER \n", i);

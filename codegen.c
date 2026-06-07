@@ -202,16 +202,17 @@ typedef struct
 {
 	uint order;
 	char* type;
+	char* byte;
 }
 type_order;
 
 const type_order _type_order[] =
 {
-	{0, "i1"},
-	{1, "i8"},
-	{2, "i16"},
-	{3, "i32"},
-	{4, "i64"}
+	{0, "i1", "1"},
+	{1, "i8", "1"},
+	{2, "i16", "2"},
+	{3, "i32", "4"},
+	{4, "i64", "8"}
 };
 #define TYPE_ORDER_SIZE 5
 
@@ -229,6 +230,20 @@ int get_torder(char* type)
 	return -1; // unsafe will be change later
 }
 
+char* get_tbyte(char* type)
+{
+	if (type == NULL)
+		return NULL;
+
+	for (uint i = 0; i != TYPE_ORDER_SIZE; i++)
+	{
+		if (strcmp(_type_order[i].type, type) == 0)
+			return _type_order[i].byte;
+	}
+
+	return NULL; // unsafe will be change later
+}
+
 void parse_ir()
 {
 	tmp_buffer = malloc(sizeof(IR) * 2);
@@ -240,6 +255,7 @@ void parse_ir()
 	uint rightcast_counter = 0;
 	uint jumpcast_counter = 0;
 	uint callcast_counter = 0;
+	uint ptr_counter = 0;
 
 	bool leftcast_key = 0;
 	bool rightcast_key = 0;
@@ -398,33 +414,63 @@ void parse_ir()
 
 				switch (ir[i].tmp.op)
 				{
-					case OP_NOT: break;
-					case OP_NEG: break;
-					case OP_CALL: break;
+					case OP_NOT:
+					case OP_NEG:
+					case OP_CALL:
+						break;
 					default:
-						fprintf(llvm, "%%%s = ", ir[i].tmp.name);	
+						if (ir[i].tmp.size != NULL)
+							break;
+						fprintf(llvm, "%%%s = ", ir[i].tmp.name);
 				}
 
 				switch (ir[i].tmp.op)
 				{
 					case OP_CONST:
-						fprintf(llvm, "add %s %s, 0\n", ir[i].tmp.type,
-							ir[i].tmp.left);
+						char* type = get_tmptype(ir[i].tmp.left);
+						if (type == NULL)
+						{
+							type = ir[i].tmp.type;
+							fprintf(llvm, "add %s %s, 0\n", type,
+								ir[i].tmp.left);
+						}
+						else
+						{
+							fprintf(llvm, "add %s %%%s, 0\n", type,
+								ir[i].tmp.left);
+						}
 
 						tmp_buffer[tmpbuffer_counter].tmp.name = ir[i].tmp.name;
-						tmp_buffer[tmpbuffer_counter].tmp.type = ir[i].tmp.type;
+						tmp_buffer[tmpbuffer_counter].tmp.type = type;
 						tmp_buffer[tmpbuffer_counter].tmp.lo_key = 0;
 						tmpbuffer_counter++;
 						tmp_buffer = realloc(tmp_buffer, sizeof(IR) * tmpbuffer_counter * 2);
 						break;
 					case OP_LOAD:
-						fprintf(llvm, "load %s, %s* ", ir[i].tmp.type,
-							ir[i].tmp.type);
+						char* ptr = NULL;
+						if (ir[i].tmp.size != NULL)
+						{
+							asprintf(&ptr, "ptr%d", ptr_counter);
+							ptr_counter++;
 
-						if (strcmp(ir[i].scope, "global") == 0)
-							fprintf(llvm, "@%s\n", ir[i].tmp.left);
+							fprintf(llvm, "%%%s = getelementptr %s, %s* %%%s, %s %%%s\n",
+								ptr, ir[i].tmp.type,
+								ir[i].tmp.type, ir[i].tmp.left,
+								get_tmptype(ir[i].tmp.size), ir[i].tmp.size);
+
+							fprintf(llvm, "%%%s = load %s, %s* %%%s, align %s\n", ir[i].tmp.name, 
+								ir[i].tmp.type, ir[i].tmp.type, ptr, get_tbyte(ir[i].tmp.type));
+						}
 						else
-							fprintf(llvm, "%%%s\n", ir[i].tmp.left);
+						{
+							fprintf(llvm, "load %s, %s* ", ir[i].tmp.type,
+									ir[i].tmp.type);
+
+							if (strcmp(ir[i].scope, "global") == 0)
+								fprintf(llvm, "@%s\n", ir[i].tmp.left);
+							else
+								fprintf(llvm, "%%%s\n", ir[i].tmp.left);	
+						}
 
 						tmp_buffer[tmpbuffer_counter].tmp.name = ir[i].tmp.name;
 						tmp_buffer[tmpbuffer_counter].tmp.type = ir[i].tmp.type;
@@ -588,13 +634,35 @@ void parse_ir()
 					fprintf(llvm, "@%s = global %s 0\n", ir[i].allocate.var_name, ir[i].allocate.type);
 				}
 				else
+				{
+					if (ir[i].allocate.size != NULL)
+					{
+						fprintf(llvm, "%%%s = alloca %s, %s %%%s, align %s\n", ir[i].allocate.var_name,
+							ir[i].allocate.type, get_tmptype(ir[i].allocate.size),
+							ir[i].allocate.size, get_tbyte(ir[i].allocate.type));
+						break;
+					}
+
 					fprintf(llvm, "%%%s = alloca %s\n", ir[i].allocate.var_name, ir[i].allocate.type);
+				}
 
 				break;
 			case TYPE_STORE:
 				char* tmp_type = get_tmptype(ir[i].store.value);
 				int tmp_order = get_torder(tmp_type);
 				const int storevar_order = get_torder(ir[i].store.type);
+
+				char* ptr = NULL;
+				if (ir[i].store.size != NULL)
+				{
+					asprintf(&ptr, "ptr%d", ptr_counter);
+					ptr_counter++;
+
+					fprintf(llvm, "%%%s = getelementptr %s, %s* %%%s, %s %%%s\n",
+						ptr, ir[i].store.type,
+						ir[i].store.type, ir[i].store.var_name,
+						get_tmptype(ir[i].store.size), ir[i].store.size);
+				}
 
 				if (get_tmplokey(ir[i].store.value))
 				{
@@ -604,10 +672,18 @@ void parse_ir()
 
 				if (tmp_order == storevar_order || ir[i].store.arg_key)
 				{
-					fprintf(llvm, "store %s %%%s, %s* %%%s\n",
-						ir[i].store.type, ir[i].store.value,
-						ir[i].store.type,  ir[i].store.var_name);
+					if (ir[i].store.size == NULL)
+					{
+						fprintf(llvm, "store %s %%%s, %s* %%%s\n",
+							ir[i].store.type, ir[i].store.value,
+							ir[i].store.type, ir[i].store.var_name);
 
+						break;
+					}
+
+					fprintf(llvm, "store %s %%%s, %s* %%%s, align %s\n",
+						ir[i].store.type, ir[i].store.value,
+						ir[i].store.type, ptr, get_tbyte(ir[i].store.type));
 					break;
 				}
 
@@ -622,13 +698,22 @@ void parse_ir()
 					ir[i].store.value,
 					ir[i].store.type);
 
-				fprintf(llvm, "store %s %%__storecast__%d, %s* ",
-					ir[i].store.type, storecast_counter, ir[i].store.type);
+				if (ir[i].store.size == NULL)
+				{
+					fprintf(llvm, "store %s %%__storecast__%d, %s* ",
+						ir[i].store.type, storecast_counter, ir[i].store.type);
 
-				if (strcmp(ir[i].scope, "global") == 0)
-					fprintf(llvm, "@%s\n", ir[i].store.var_name);
+					if (strcmp(ir[i].scope, "global") == 0)
+						fprintf(llvm, "@%s\n", ir[i].store.var_name);
+					else
+						fprintf(llvm, "%%%s\n", ir[i].store.var_name);
+				}
 				else
-					fprintf(llvm, "%%%s\n", ir[i].store.var_name);
+				{
+					fprintf(llvm, "store %s %%__storecast__%d, %s* %%%s, align %s\n",
+						ir[i].store.type, storecast_counter, ir[i].store.type,
+						ptr, get_tbyte(ir[i].store.type));
+				}
 
 				storecast_counter++;
 				break;
@@ -673,7 +758,7 @@ void parse_ir()
 				if (ret_order == current_funcorder)
 				{
 					fprintf(llvm, "ret %s %%%s\n",
-						current_functype, 
+						current_functype,
 						ir[i].ret.value);
 
 					break;
@@ -700,7 +785,7 @@ void parse_ir()
 				}
 
 				fprintf(llvm, "ret %s %%___returncast___%d\n",
-					current_functype, 
+					current_functype,
 					returncast_counter);
 				returncast_counter++;
 				break;
@@ -720,7 +805,7 @@ void codegen_main(char* out)
 	{
 		if (strlen(out) > 64)
 			printf("Output name length must be max 64\n");
-			
+
 		char* llvmfile_name = malloc(64);
 		sprintf(llvmfile_name, "%s.ll", out);
 		llvm = fopen(llvmfile_name, "wr");

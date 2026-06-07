@@ -25,20 +25,20 @@
 
 #define HELP_OUT "Useage: seal [options] [value]\n" \
 				 "Options:\n" \
-				 "--Save -s     Save to output file.\n" \
-				 "	Values:\n" \
-				 "	asm\n" \
-				 "	obj\n" \
-				 "	llvm\n" \
-				 "	ir\n" \
-				 "--Compile -c  Show the source file.\n" \
-				 "	Values: Source file name.\n" \
-				 "--Output -o   Show the output file name.\n" \
-				 "	Values: Output file name" \
+				 "	--Save -s     Save to output file.\n" \
+				 "		Values:\n" \
+				 "		asm\n" \
+				 "		obj\n" \
+				 "		llvm\n" \
+				 "		ir\n" \
+				 "	--Compile -c  Show the source file.\n" \
+				 "		Values: Source file name.\n" \
+				 "	--Output -o   Show the output file name.\n" \
+				 "		Values: Output file name\n" \
 				 "Useage: seal [information].\n" \
 				 "Options:\n" \
-				 "--Help -h     Print this message and exit.\n" \
-				 "--Version -v  Print version and exit.\n"
+				 "	--Help -h     Print this message and exit.\n" \
+				 "	--Version -v  Print version and exit.\n"
 
 uint tab_counter = 0;
 
