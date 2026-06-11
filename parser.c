@@ -331,6 +331,8 @@ AST parse_var(uint *i, uint c)
 		result.var.dims = dims;
 		(*i)++;
 	}
+	else
+		result.var.dim_key = 0;
 
 	if (tokens[*i].token_type == SYMBOL_ASSIGN)
 	{
